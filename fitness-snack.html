@@ -1,0 +1,2830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F7F2E9">
+<meta name="description" content="Sixty-second movement snacks, matched to how you feel. Pick a mood, move for one minute, feel the difference. No signup, nothing to install.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Settle">
+<meta property="og:title" content="Settle · Movement snacks for your mind">
+<meta property="og:description" content="Sixty-second movement snacks, matched to how you feel. No signup, nothing to install.">
+<meta property="og:url" content="https://settlemoves.com/">
+<meta property="og:image" content="https://settlemoves.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Settle · Movement snacks for your mind">
+<meta name="twitter:description" content="Sixty-second movement snacks, matched to how you feel.">
+<meta name="twitter:image" content="https://settlemoves.com/og.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Settle">
+<title>Settle · Movement snacks for your mind</title>
+<style>
+  :root {
+    --bg: #F7F2E9;
+    --card: #ffffff;
+    --ink: #2D2A26;
+    --ink2: #8A8378;
+    --line: #EDE6D9;
+    --accent: #F47D31;
+    --accent-soft: rgba(244,125,49,.12);
+    --warn: #c98a2b;
+    --sans: "SF Pro Rounded", ui-rounded, -apple-system, "Segoe UI", "Nunito", Roboto, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--sans);
+    -webkit-font-smoothing: antialiased; line-height: 1.5;
+    min-height: 100vh; display: flex; justify-content: center;
+  }
+  button, input { touch-action: manipulation; }
+  .app { width: 100%; max-width: 440px; padding: 22px 20px 120px; }
+  body.flow .app { padding-bottom: 48px; }
+
+  /* ---------- header ---------- */
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .tagline { font-size: 12.5px; font-weight: 700; color: var(--ink2); letter-spacing: -.2px; margin-top: 1px; }
+  .logo {
+    font-size: 23px; letter-spacing: -.5px; font-weight: 800; color: var(--ink);
+    background: none; border: none; cursor: pointer; font-family: var(--sans); padding: 0;
+    line-height: 1.05;
+  }
+  .logo span { color: var(--accent); }
+  .logo:active { opacity: .6; }
+  .head-right { display: flex; align-items: center; gap: 10px; }
+  .streak-chip {
+    font-size: 12px; font-weight: 700; color: var(--accent);
+    background: var(--accent-soft); border-radius: 100px; padding: 5px 11px;
+  }
+  .voice-btn {
+    width: 38px; height: 38px; border-radius: 50%; border: none; cursor: pointer;
+    background: var(--card); box-shadow: 0 1px 3px rgba(60,50,30,.06);
+    display: flex; align-items: center; justify-content: center; color: var(--ink); transition: color .15s ease;
+  }
+  .voice-btn.off { color: #c1b9a8; }
+  .voice-btn:active { transform: scale(.94); }
+
+  /* ---------- bottom nav ---------- */
+  .nav {
+    position: fixed; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%);
+    width: calc(100% - 32px); max-width: 400px; z-index: 40;
+    background: var(--card); border-radius: 100px; box-shadow: 0 6px 24px rgba(50,40,20,.14);
+    display: flex; justify-content: space-around; padding: 8px 10px;
+  }
+  body.flow .nav { display: none; }
+  .nav button {
+    flex: 1; background: none; border: none; cursor: pointer; font-family: var(--sans);
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    color: #b5ad9e; font-size: 11px; font-weight: 600; padding: 6px 0; border-radius: 100px;
+  }
+  .nav button.on { color: var(--accent); }
+  .nav button:active { transform: scale(.95); }
+
+  /* ---------- shared ---------- */
+  .screen { display: none; }
+  .screen.active { display: block; animation: fade .3s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .label { font-size: 13px; color: var(--ink2); font-weight: 600; margin-bottom: 9px; }
+  .card { background: var(--card); border-radius: 24px; padding: 20px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(60,50,30,.04); }
+  h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 10px; line-height: 1.15; }
+  h2 { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+  .sechead { display: flex; justify-content: space-between; align-items: baseline; margin: 26px 0 12px; }
+  .sechead h3 { font-size: 19px; font-weight: 800; letter-spacing: -.3px; }
+  .sechead button { background: none; border: none; color: var(--accent); font-weight: 700; font-size: 13.5px; cursor: pointer; font-family: var(--sans); }
+  p.sub { color: var(--ink2); font-size: 14.5px; line-height: 1.55; margin-bottom: 22px; }
+  .btn {
+    width: 100%; padding: 17px; border-radius: 100px; border: none; cursor: pointer;
+    font-size: 16px; font-weight: 700; letter-spacing: .1px;
+    background: var(--accent); color: #fff; margin-top: 12px;
+    transition: transform .1s ease, opacity .2s ease;
+  }
+  .btn:active { transform: scale(.98); }
+  .btn.dark { background: var(--ink); }
+  .btn.ghost { background: transparent; color: var(--ink2); font-weight: 500; padding: 13px; }
+  .btn.ghost:active { transform: none; opacity: .6; }
+  input[type=number] {
+    width: 100%; padding: 14px; background: #faf7f1; border: 1.5px solid var(--line);
+    border-radius: 14px; color: var(--ink); font-size: 16px; font-family: var(--sans);
+  }
+  input[type=number]:focus { outline: none; border-color: var(--accent); }
+  .wl-in {
+    width: 100%; box-sizing: border-box; margin-top: 8px; padding: 14px;
+    background: #faf7f1; border: 1.5px solid var(--line); border-radius: 14px;
+    color: var(--ink); font-size: 16px; font-family: var(--sans);
+  }
+  .wl-in:focus { outline: none; border-color: var(--accent); }
+  .badge-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+  .badge { text-align: center; padding: 12px 6px 10px; border-radius: 14px; background: #faf7f1; border: 1.5px solid var(--line); }
+  .badge .bi { font-size: 26px; line-height: 1; }
+  .badge .bn { font-size: 11.5px; font-weight: 700; margin-top: 7px; color: var(--ink); }
+  .badge .bd { font-size: 10.5px; color: var(--ink2); margin-top: 3px; line-height: 1.35; }
+  .badge.locked { opacity: .4; filter: grayscale(1); }
+  .badge-new {
+    display: flex; align-items: center; gap: 12px; text-align: left;
+    background: var(--accent-soft); border: 1.5px solid var(--accent);
+    border-radius: 14px; padding: 12px 14px; margin-top: 14px;
+    font-size: 14px; animation: badgepop .45s cubic-bezier(.2,1.4,.4,1);
+  }
+  @keyframes badgepop { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .wl-slide { animation: wlslide .55s cubic-bezier(.2,1,.4,1) .45s both; }
+  /* The sloth: guide bubble (first run), hang (home waitlist card), settle (results) */
+  .sloth-guide { display: flex; align-items: flex-start; gap: 10px; margin: 16px 0 2px; animation: fade .4s ease; }
+  .sloth-guide svg { flex: none; }
+  .sloth-bubble {
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 16px;
+    padding: 11px 14px; font-size: 13.5px; font-weight: 600; color: var(--ink);
+    position: relative; margin-top: 6px; line-height: 1.45;
+  }
+  .sloth-bubble:before {
+    content: ""; position: absolute; left: -7px; top: 16px;
+    border: 7px solid transparent; border-right-color: var(--card); border-left: 0;
+  }
+  .sloth-hello { display: flex; align-items: flex-end; gap: 8px; margin: 12px 0 2px; animation: fade .4s ease; }
+  .sloth-hello svg { flex: none; }
+  .sloth-hello .sloth-bubble { margin-bottom: 20px; }
+  .sloth-hello .sloth-bubble:before { top: auto; bottom: 16px; }
+  .sloth-hello .greet { font-size: 23px; line-height: 1.15; }
+  #res-sloth { text-align: center; margin: 2px 0 -4px; display: none; animation: fade .5s ease .3s both; }
+  /* Floating waitlist pill — the always-there ask. Hidden once joined and during a snack. */
+  .wl-fab {
+    position: fixed; bottom: 98px; right: max(16px, calc(50vw - 204px)); z-index: 40;
+    display: flex; align-items: center; gap: 7px;
+    padding: 13px 19px; border: none; border-radius: 100px; cursor: pointer;
+    background: var(--accent); color: #fff; font-family: var(--sans);
+    font-size: 14.5px; font-weight: 800; letter-spacing: .1px;
+    box-shadow: 0 6px 20px rgba(244,125,49,.38);
+    animation: wlfabin .5s cubic-bezier(.2,1,.4,1) both, wlnudge 7s ease-in-out 4s infinite;
+  }
+  .wl-fab:active { transform: scale(.94); }
+  body.fab-off .wl-fab { display: none !important; }
+  body.flow .wl-fab { bottom: 18px; }   /* nav is hidden in flow: tuck the pill lower */
+  @keyframes wlfabin { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  @keyframes wlnudge { 0%, 93%, 100% { transform: none; } 95% { transform: rotate(-2.5deg) scale(1.05); } 97% { transform: rotate(2deg) scale(1.05); } 99% { transform: rotate(-1deg) scale(1.01); } }
+  @keyframes wlslide { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  .toast {
+    position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%);
+    background: var(--ink); color: #fff; font-size: 14px; font-weight: 600;
+    padding: 12px 20px; border-radius: 100px; z-index: 70; white-space: nowrap;
+    box-shadow: 0 6px 20px rgba(45,42,38,.25); animation: toastin 3.5s ease both;
+    pointer-events: none;
+  }
+  @keyframes toastin {
+    0% { opacity: 0; transform: translate(-50%, 12px); }
+    8%, 85% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, 6px); }
+  }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  .field { margin-bottom: 18px; }
+  .seg { display: flex; gap: 7px; flex-wrap: wrap; }
+  .seg button {
+    flex: 1; min-width: 70px; padding: 12px 6px; background: #faf7f1; border: 1.5px solid var(--line);
+    border-radius: 100px; color: var(--ink2); font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--sans); transition: all .15s ease;
+  }
+  .seg button.sel { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+  /* ---------- Today ---------- */
+  .greet-cap { font-size: 13px; color: var(--ink2); font-weight: 600; }
+  .greet { font-size: 30px; font-weight: 800; letter-spacing: -.6px; margin-bottom: 16px; }
+  .ctx-pill {
+    display: flex; align-items: center; justify-content: space-between; width: 100%;
+    background: var(--card); border: none; cursor: pointer; font-family: var(--sans);
+    border-radius: 100px; padding: 13px 18px; margin-bottom: 18px;
+    box-shadow: 0 1px 3px rgba(60,50,30,.05); text-align: left;
+  }
+  .ctx-pill .cp-l { display: flex; align-items: center; gap: 10px; }
+  .ctx-pill .cp-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); flex: none; }
+  .ctx-pill .cp-t { font-size: 14.5px; font-weight: 700; }
+  .ctx-pill .cp-s { font-size: 12px; color: var(--ink2); font-weight: 500; }
+  .ctx-pill .cp-chg { font-size: 13px; color: var(--accent); font-weight: 700; }
+
+  /* timeline (your day) */
+  .tl-item {
+    display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+    background: var(--card); border: none; cursor: pointer; font-family: var(--sans);
+    border-radius: 22px; padding: 16px 18px; margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(60,50,30,.04); transition: transform .12s ease;
+  }
+  .tl-item:active { transform: scale(.985); }
+  .tl-item .tl-ic {
+    width: 46px; height: 46px; border-radius: 50%; flex: none;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tl-item .tl-t { font-size: 15.5px; font-weight: 700; }
+  .tl-item .tl-s { font-size: 12.5px; color: var(--ink2); font-weight: 500; }
+  .tl-item .tl-now {
+    margin-left: auto; font-size: 10.5px; font-weight: 800; letter-spacing: .5px;
+    color: var(--accent); background: var(--accent-soft); border-radius: 100px; padding: 4px 9px; flex: none;
+  }
+
+  /* mood cards — horizontal on Today, vertical on Explore */
+  .hrow { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; margin: 0 -20px; padding-left: 20px; padding-right: 20px; scrollbar-width: none; }
+  .hrow::-webkit-scrollbar { display: none; }
+  .moodcard-sm {
+    flex: none; width: 148px; border: none; cursor: pointer; font-family: var(--sans); text-align: left;
+    border-radius: 22px; padding: 16px 14px 12px; transition: transform .12s ease; position: relative;
+  }
+  .moodcard-sm:active { transform: scale(.97); }
+  .moodcard-sm .sc-title { font-size: 16.5px; font-weight: 800; letter-spacing: -.2px; }
+  .moodcard-sm .sc-sub { font-size: 11.5px; font-weight: 500; opacity: .85; margin-top: 2px; line-height: 1.35; min-height: 46px; }
+  .moodcard-sm svg { width: 52px; height: 52px; display: block; margin: 6px auto 0; }
+
+  .statecard {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    width: 100%; text-align: left; border: none; cursor: pointer; font-family: var(--sans);
+    border-radius: 24px; padding: 22px 22px; margin-bottom: 12px; min-height: 104px;
+    overflow: hidden; position: relative; transition: transform .12s ease;
+  }
+  .statecard:active { transform: scale(.985); }
+  .statecard .sc-title { font-size: 21px; font-weight: 800; letter-spacing: -.3px; }
+  .statecard .sc-sub { font-size: 13.5px; font-weight: 500; opacity: .85; margin-top: 3px; max-width: 95%; line-height: 1.35; }
+  .statecard svg { flex: none; width: 76px; height: 76px; }
+
+  /* movement library rows */
+  .mv-row {
+    display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+    background: var(--card); border: none; cursor: pointer; font-family: var(--sans);
+    border-radius: 20px; padding: 15px 18px; margin-bottom: 9px;
+    box-shadow: 0 1px 3px rgba(60,50,30,.04);
+  }
+  .mv-row:active { transform: scale(.985); }
+  .mv-row .mv-t { font-size: 15px; font-weight: 700; }
+  .mv-row .mv-s { font-size: 12.5px; color: var(--ink2); font-weight: 500; }
+  .chip {
+    margin-left: auto; flex: none; font-size: 10.5px; font-weight: 800; letter-spacing: .4px;
+    border-radius: 100px; padding: 4px 10px; text-transform: uppercase;
+  }
+  .chip.inv { color: #3D8B78; background: rgba(61,139,120,.12); }
+  .chip.full { color: #5479F7; background: rgba(84,121,247,.12); }
+  .chip.calm { color: #586BE0; background: rgba(88,107,224,.12); }
+
+  /* ---------- slider ---------- */
+  .slider-wrap { display: flex; align-items: center; gap: 16px; }
+  input[type=range] { flex: 1; accent-color: var(--accent); height: 34px; }
+  .slider-val { font-size: 32px; font-weight: 800; width: 46px; text-align: right; color: var(--accent); }
+  .slider-ends { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--ink2); margin-top: 4px; }
+
+  /* ---------- sheets ---------- */
+  .sheet-mask {
+    position: fixed; inset: 0; background: rgba(45,42,38,.4); z-index: 60;
+    display: none; align-items: flex-end; justify-content: center;
+  }
+  .sheet-mask.open { display: flex; animation: fade .2s ease; }
+  .sheet {
+    background: var(--bg); border-radius: 28px 28px 0 0; padding: 26px 20px 34px;
+    width: 100%; max-width: 440px;
+  }
+  .sheet h3 { font-size: 21px; font-weight: 800; letter-spacing: -.4px; margin-bottom: 4px; }
+  .sheet p { font-size: 13.5px; color: var(--ink2); margin-bottom: 16px; }
+  .ctx-opt {
+    display: flex; align-items: center; gap: 13px; width: 100%; text-align: left;
+    background: var(--card); border: 2px solid transparent; cursor: pointer; font-family: var(--sans);
+    border-radius: 18px; padding: 15px 16px; margin-bottom: 9px;
+  }
+  .ctx-opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+  .ctx-opt .co-t { font-size: 15px; font-weight: 700; }
+  .ctx-opt .co-s { font-size: 12.5px; color: var(--ink2); font-weight: 500; }
+  .ctx-opt .co-dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+
+  /* ---------- prescription ---------- */
+  .back-link { background: none; border: none; cursor: pointer; color: var(--ink2); font-family: var(--sans); font-size: 14px; font-weight: 600; padding: 0 0 14px; }
+  .rx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin: 4px 0 4px; }
+  .rx-cell { background: #faf7f1; border-radius: 14px; padding: 13px 14px; }
+  .rx-cell .v { font-size: 20px; font-weight: 700; color: var(--ink); }
+  .rx-cell .v.small { font-size: 13px; }
+  .rx-cell .v em { font-style: normal; font-size: 12px; font-weight: 500; color: var(--ink2); }
+  .rx-hero { text-align: center; padding: 14px 0 6px; }
+  .rx-hero .n { font-size: 96px; font-weight: 800; color: var(--accent); line-height: .95; letter-spacing: -3px; }
+  .rx-stepper { display: flex; align-items: center; justify-content: center; gap: 18px; }
+  .stepbtn {
+    width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--line); cursor: pointer; flex: none;
+    background: none; color: #b5ad9e; font-size: 17px; font-weight: 700;
+    font-family: var(--sans); line-height: 1; transition: all .12s ease;
+  }
+  .stepbtn:active { transform: scale(.9); color: var(--accent); border-color: var(--accent); }
+  .ctxseg { display: flex; gap: 9px; justify-content: center; margin: 0 0 14px; }
+  .ctxseg button {
+    display: flex; align-items: center; gap: 7px; padding: 11px 16px;
+    background: var(--card); border: 2px solid var(--line); border-radius: 100px;
+    color: var(--ink2); font-size: 13.5px; font-weight: 700; cursor: pointer;
+    font-family: var(--sans); transition: all .15s ease;
+  }
+  .ctxseg button svg { flex: none; }
+  .ctxseg button.sel { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .ctxseg button:active { transform: scale(.96); }
+  .anx-row {
+    display: flex; align-items: center; gap: 12px; margin: 16px 4px 0;
+    font-size: 13px; color: var(--ink2); font-weight: 600;
+  }
+  .anx-row input { flex: 1; accent-color: var(--accent); height: 30px; }
+  .anx-row b { font-size: 18px; color: var(--accent); width: 24px; text-align: right; font-weight: 800; }
+  .rx-hero .u { font-size: 14.5px; color: var(--ink2); font-weight: 500; margin-top: 12px; }
+  .count-cue {
+    display: inline-block; margin-top: 12px; padding: 9px 16px;
+    background: var(--accent-soft); border-radius: 100px;
+    color: var(--accent); font-size: 13.5px; font-weight: 700;
+  }
+  .rx-hero .exname { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+  .rx-hero .exctx { font-size: 13px; color: var(--ink2); font-weight: 600; margin-bottom: 18px; }
+  .tier-pick { display: flex; flex-direction: column; gap: 9px; margin-bottom: 4px; }
+  .tier-pick button {
+    text-align: left; padding: 14px 16px; background: #faf7f1; border: 1.5px solid var(--line);
+    border-radius: 14px; color: var(--ink); cursor: pointer; font-size: 14.5px; font-family: var(--sans); transition: all .15s ease;
+  }
+  .tier-pick button .t-name { font-weight: 700; }
+  .tier-pick button .t-desc { color: var(--ink2); font-size: 12.5px; font-weight: 500; margin-top: 3px; }
+  .tier-pick button.sel { border-color: var(--accent); background: var(--accent-soft); }
+  .footnote { font-size: 12.5px; color: var(--ink2); line-height: 1.55; margin-top: 14px; }
+
+  .softlink {
+    display: block; width: 100%; text-align: center; background: none; border: none; cursor: pointer;
+    color: var(--ink2); font-size: 14px; font-weight: 500; font-family: var(--sans); padding: 16px 0 4px;
+  }
+  .softlink:active { opacity: .6; }
+
+  details.reveal { margin-top: 8px; }
+  details.reveal > summary {
+    list-style: none; cursor: pointer; text-align: center; color: var(--ink2); font-weight: 500;
+    font-size: 14px; padding: 14px 0; user-select: none;
+  }
+  details.reveal > summary::-webkit-details-marker { display: none; }
+  details.reveal > summary::after { content: "  ⌄"; }
+  details.reveal[open] > summary::after { content: "  ⌃"; }
+  details.reveal .reveal-body { animation: fade .25s ease; padding-top: 4px; }
+
+  /* ---------- timer ---------- */
+  .timer-screen { text-align: center; }
+  .ring-wrap { position: relative; width: 240px; height: 240px; margin: 14px auto 8px; }
+  .ring-wrap svg { transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: #e9e0d1; stroke-width: 6; }
+  .ring-fg { fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset .95s linear; }
+  .t-num { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+  .t-num .sec { font-size: 82px; font-weight: 800; line-height: 1; letter-spacing: -3px; color: var(--ink); }
+  .t-num .lbl { font-size: 14px; color: var(--ink2); font-weight: 500; margin-top: 6px; }
+  .pace { font-size: 13px; color: var(--ink2); font-weight: 500; margin-bottom: 22px; }
+  .pace b { color: var(--ink); font-weight: 700; }
+  .t-goal { font-size: 15px; color: var(--ink2); font-weight: 600; margin: 0 0 2px; }
+  .t-goal b { font-size: 38px; color: var(--accent); font-weight: 800; letter-spacing: -1px; margin-right: 6px; vertical-align: middle; }
+  .milestone {
+    min-height: 92px; display: flex; align-items: center; justify-content: center;
+    padding: 0 14px; font-size: 18px; font-weight: 600; line-height: 1.5; color: var(--ink);
+  }
+  .milestone.flash { animation: mflash .6s ease; }
+  @keyframes mflash { 0% { opacity: 0; } 100% { opacity: 1; } }
+  .abort { margin-top: 14px; }
+
+  .orb-wrap { position: relative; width: 260px; height: 260px; margin: 14px auto 8px; display: flex; align-items: center; justify-content: center; }
+  .orb {
+    width: 220px; height: 220px; border-radius: 50%;
+    background: var(--accent-soft);
+    border: 2px solid var(--accent); transform: scale(0.4);
+    transition: transform 4s ease-in-out; will-change: transform;
+  }
+  .orb-phase {
+    /* pinned explicitly: Safari does not center abs-pos flex children like Chrome does.
+       2026-07-16 (tester): "A second short inhale" / "Inhale through your nose" overflowed
+       the 220px label box at 22px — smaller type, wraps to two balanced lines inside the orb. */
+    position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+    font-size: 18.5px; font-weight: 600; color: var(--ink); text-align: center; padding: 0 24px;
+    line-height: 1.35; text-wrap: balance;
+  }
+  /* phones are tall: float the breathing orb down into the middle instead of hugging the top */
+  @media (min-height: 700px) {
+    #timer-calm .orb-wrap { margin-top: 13vh; }
+    #timer-calm .pace { margin-top: 3vh; }
+    #timer-calm .milestone { margin-top: 4vh; margin-bottom: 5vh; }
+  }
+
+  /* ---------- animated demo figure ---------- */
+  .figwrap { display: flex; justify-content: center; margin: 2px 0 8px; }
+  .figbub {
+    width: 184px; height: 184px; border-radius: 50%; background: var(--accent-soft);
+    display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
+  }
+  .fig { width: 148px; height: 148px; overflow: visible; }
+  .figwrap.sm { margin: 0 0 4px; }
+  .figwrap.sm .fig { width: 200px; height: 200px; }
+  /* short phone screens: keep the timer on one screen */
+  @media (max-height: 740px) {
+    .ring-wrap { transform: scale(.84); margin: -8px auto -6px; }
+    .figwrap.sm .fig { width: 168px; height: 168px; }
+    .figbub { width: 160px; height: 160px; }
+    .fig { width: 128px; height: 128px; }
+    .milestone { min-height: 76px; }
+  }
+  /* Headspace-style character: chunky filled body, mood-colored, friendly face */
+  .fig path { stroke: var(--accent); stroke-width: 9; stroke-linecap: round; fill: none; }
+  .fig .f-torsoP { stroke-width: 17; }
+  .fig .f-head { fill: var(--accent); }
+  .fig .f-face path { stroke: rgba(45,42,38,.62); stroke-width: 2.6; fill: none; }
+  .fig .f-chair { stroke: #c9c0ae; stroke-width: 5; }
+  .fig .f-shadow { fill: #ddd3bf; stroke: none; opacity: .85; }
+  .fig .f-cpulse { stroke: var(--ink); stroke-width: 3; fill: none; opacity: 0; }
+  .fig .f-arc { fill: none; stroke: var(--ink); stroke-width: 2; stroke-dasharray: 3 6; stroke-linecap: round; opacity: 0; }
+  .fig .f-blade { stroke: rgba(45,42,38,.5); stroke-width: 4; }
+  .fig g, .fig circle, .fig path, .fig ellipse { transform-box: view-box; }
+
+  /* jumping jacks */
+  .anim-jacks .f-armL { transform-origin: 60px 50px; animation: fg-jal var(--d) ease-in-out infinite; }
+  .anim-jacks .f-armR { transform-origin: 60px 50px; animation: fg-jar var(--d) ease-in-out infinite; }
+  .anim-jacks .f-legL { transform-origin: 60px 84px; animation: fg-jll var(--d) ease-in-out infinite; }
+  .anim-jacks .f-legR { transform-origin: 60px 84px; animation: fg-jlr var(--d) ease-in-out infinite; }
+  .anim-jacks .f-upper { animation: fg-hop var(--d) ease-in-out infinite; }
+  @keyframes fg-jal { 0%,100% { transform: rotate(0); } 50% { transform: rotate(-160deg); } }
+  @keyframes fg-jar { 0%,100% { transform: rotate(0); } 50% { transform: rotate(160deg); } }
+  @keyframes fg-jll { 0%,100% { transform: rotate(0); } 50% { transform: rotate(-20deg); } }
+  @keyframes fg-jlr { 0%,100% { transform: rotate(0); } 50% { transform: rotate(20deg); } }
+  @keyframes fg-hop { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
+  /* ---- articulated side-view rig (real joints: hip → knee → ankle) ---- */
+  .fig .f-farw { transform: translateX(5px); opacity: .38; }
+
+  /* squat — hips drop & sit back, thighs to parallel, shins counter-rotate so
+     feet stay planted, torso hinges, arms rise forward. Real squat mechanics. */
+  .anim-squat2 .f-hipY   { animation: sq2-hip var(--d) ease-in-out infinite; }
+  .anim-squat2 .f-torso2 { transform-origin: 60px 84px; animation: sq2-torso var(--d) ease-in-out infinite; }
+  .anim-squat2 .f-arm2   { transform-origin: 58px 52px; animation: sq2-arm var(--d) ease-in-out infinite; }
+  .anim-squat2 .f-thighN, .anim-squat2 .f-thighF { transform-origin: 60px 84px; animation: sq2-thigh var(--d) ease-in-out infinite; }
+  .anim-squat2 .f-shinN,  .anim-squat2 .f-shinF  { transform-origin: 60px 104px; animation: sq2-shin var(--d) ease-in-out infinite; }
+  .anim-squat2 .f-footN,  .anim-squat2 .f-footF  { transform-origin: 60px 124px; animation: sq2-foot var(--d) ease-in-out infinite; }
+  @keyframes sq2-hip   { 0%,100% { transform: translateY(0); } 45%,58% { transform: translateY(16px); } }
+  @keyframes sq2-torso { 0%,100% { transform: rotate(0); } 45%,58% { transform: rotate(28deg); } }
+  @keyframes sq2-arm   { 0%,100% { transform: rotate(0); } 45%,58% { transform: rotate(-116deg); } }
+  @keyframes sq2-thigh { 0%,100% { transform: rotate(0); } 45%,58% { transform: rotate(-53deg); } }
+  @keyframes sq2-shin  { 0%,100% { transform: rotate(0); } 45%,58% { transform: rotate(106deg); } }
+  @keyframes sq2-foot  { 0%,100% { transform: rotate(0); } 45%,58% { transform: rotate(-53deg); } }
+
+  /* march / high knees — visible knee drive, opposite arm swing, light bounce */
+  .anim-march2 .f-thighN, .anim-knees2 .f-thighN { transform-origin: 60px 84px; animation: m2-tn var(--d) ease-in-out infinite; }
+  .anim-march2 .f-shinN,  .anim-knees2 .f-shinN  { transform-origin: 60px 104px; animation: m2-sn var(--d) ease-in-out infinite; }
+  .anim-march2 .f-thighF, .anim-knees2 .f-thighF { transform-origin: 60px 84px; animation: m2-tf var(--d) ease-in-out infinite; }
+  .anim-march2 .f-shinF,  .anim-knees2 .f-shinF  { transform-origin: 60px 104px; animation: m2-sf var(--d) ease-in-out infinite; }
+  .anim-march2 .f-arm2,   .anim-knees2 .f-arm2   { transform-origin: 58px 52px; animation: m2-arm var(--d) ease-in-out infinite; }
+  .anim-march2 .f-hipY,   .anim-knees2 .f-hipY   { animation: m2-bob var(--d) ease-in-out infinite; }
+  .anim-knees2 .f-thighN { animation-name: k2-tn; }
+  .anim-knees2 .f-shinN  { animation-name: k2-sn; }
+  .anim-knees2 .f-thighF { animation-name: k2-tf; }
+  .anim-knees2 .f-shinF  { animation-name: k2-sf; }
+  @keyframes m2-tn { 0%,50%,100% { transform: rotate(0); } 25% { transform: rotate(-55deg); } }
+  @keyframes m2-sn { 0%,50%,100% { transform: rotate(0); } 25% { transform: rotate(55deg); } }
+  @keyframes m2-tf { 0%,50%,100% { transform: rotate(0); } 75% { transform: rotate(-55deg); } }
+  @keyframes m2-sf { 0%,50%,100% { transform: rotate(0); } 75% { transform: rotate(55deg); } }
+  @keyframes k2-tn { 0%,50%,100% { transform: rotate(0); } 25% { transform: rotate(-85deg); } }
+  @keyframes k2-sn { 0%,50%,100% { transform: rotate(0); } 25% { transform: rotate(85deg); } }
+  @keyframes k2-tf { 0%,50%,100% { transform: rotate(0); } 75% { transform: rotate(-85deg); } }
+  @keyframes k2-sf { 0%,50%,100% { transform: rotate(0); } 75% { transform: rotate(85deg); } }
+  @keyframes m2-arm { 0%,50%,100% { transform: rotate(10deg); } 25% { transform: rotate(-32deg); } 75% { transform: rotate(26deg); } }
+  @keyframes m2-bob { 0%,50%,100% { transform: translateY(0); } 25%,75% { transform: translateY(-3px); } }
+
+  /* rag-doll folds — roll down one vertebra at a time, hang, roll up */
+  .anim-fold .f-torso2 { transform-origin: 60px 84px; animation: fd-t var(--d) ease-in-out infinite; }
+  .anim-fold .f-arm2 { transform-origin: 58px 52px; animation: fd-a var(--d) ease-in-out infinite; }
+  .anim-fold .f-thighN, .anim-fold .f-thighF { transform-origin: 60px 84px; animation: fd-k var(--d) ease-in-out infinite; }
+  .anim-fold .f-shinN, .anim-fold .f-shinF { transform-origin: 60px 104px; animation: fd-s var(--d) ease-in-out infinite; }
+  @keyframes fd-t { 0%,100% { transform: rotate(0); } 35%,58% { transform: rotate(148deg); } 92% { transform: rotate(-4deg); } }
+  @keyframes fd-a { 0%,100% { transform: rotate(0); } 35%,58% { transform: rotate(-140deg); } }
+  @keyframes fd-k { 0%,100% { transform: rotate(0); } 35%,58% { transform: rotate(-10deg); } }
+  @keyframes fd-s { 0%,100% { transform: rotate(0); } 35%,58% { transform: rotate(12deg); } }
+
+  /* seated calf pump — BOTH heels up high, knees rise, toes stay planted */
+  .anim-calf .f-foot2, .anim-calf .f-footB { transform-origin: 98px 128px; animation: fg-heel var(--d) ease-in-out infinite; }
+  .anim-calf .f-shin, .anim-calf .f-shinB { animation: fg-shinup var(--d) ease-in-out infinite; }
+  .anim-calf .f-thigh, .anim-calf .f-thighB { transform-origin: 56px 90px; animation: fg-kneeup var(--d) ease-in-out infinite; }
+  .anim-calf .f-cpulse { transform-origin: 90px 112px; animation: fg-cpulse var(--d) ease-in-out infinite; }
+  .anim-calf .f-head, .anim-calf .f-face, .anim-calf .f-torso { animation: fg-bob2 var(--d) ease-in-out infinite; }
+  @keyframes fg-heel { 0%,100% { transform: rotate(0); } 40%,60% { transform: rotate(22deg); } }
+  @keyframes fg-shinup { 0%,100% { transform: translateY(0); } 40%,60% { transform: translateY(-5px); } }
+  @keyframes fg-kneeup { 0%,100% { transform: rotate(0); } 40%,60% { transform: rotate(-8deg); } }
+  @keyframes fg-cpulse { 0%,25% { transform: scale(.55); opacity: 0; } 40% { transform: scale(.8); opacity: .9; } 90%,100% { transform: scale(1.35); opacity: 0; } }
+  @keyframes fg-bob2 { 0%,100% { transform: translateY(0); } 40%,60% { transform: translateY(-2px); } }
+
+  /* silent heel drums — sprint-fast alternating heels */
+  .anim-drums .f-foot2 { transform-origin: 98px 128px; animation: dr-n var(--d) linear infinite; }
+  .anim-drums .f-footB { transform-origin: 98px 128px; animation: dr-f var(--d) linear infinite; }
+  .anim-drums .f-shin { animation: dr-sn var(--d) linear infinite; }
+  .anim-drums .f-shinB { animation: dr-sf var(--d) linear infinite; }
+  .anim-drums .f-thigh { transform-origin: 56px 90px; animation: dr-tn var(--d) linear infinite; }
+  .anim-drums .f-thighB { transform-origin: 56px 90px; animation: dr-tf var(--d) linear infinite; }
+  @keyframes dr-n { 0%,50%,100% { transform: rotate(0); } 25% { transform: rotate(18deg); } }
+  @keyframes dr-f { 0%,50%,100% { transform: rotate(0); } 75% { transform: rotate(18deg); } }
+  @keyframes dr-sn { 0%,50%,100% { transform: translateY(0); } 25% { transform: translateY(-4px); } }
+  @keyframes dr-sf { 0%,50%,100% { transform: translateY(0); } 75% { transform: translateY(-4px); } }
+  @keyframes dr-tn { 0%,50%,100% { transform: rotate(0); } 25% { transform: rotate(-6deg); } }
+  @keyframes dr-tf { 0%,50%,100% { transform: rotate(0); } 75% { transform: rotate(-6deg); } }
+
+  /* heel-count patterns — left... right... both, with a beat of rest */
+  .anim-heelpat .f-foot2 { transform-origin: 98px 128px; animation: hp-n var(--d) ease-in-out infinite; }
+  .anim-heelpat .f-footB { transform-origin: 98px 128px; animation: hp-f var(--d) ease-in-out infinite; }
+  .anim-heelpat .f-shin { animation: hp-sn var(--d) ease-in-out infinite; }
+  .anim-heelpat .f-shinB { animation: hp-sf var(--d) ease-in-out infinite; }
+  @keyframes hp-n { 0%,26%,60%,100% { transform: rotate(0); } 13% { transform: rotate(20deg); } 76%,84% { transform: rotate(20deg); } }
+  @keyframes hp-f { 0%,33%,60%,100% { transform: rotate(0); } 46% { transform: rotate(20deg); } 76%,84% { transform: rotate(20deg); } }
+  @keyframes hp-sn { 0%,26%,60%,100% { transform: translateY(0); } 13% { transform: translateY(-5px); } 76%,84% { transform: translateY(-5px); } }
+  @keyframes hp-sf { 0%,33%,60%,100% { transform: translateY(0); } 46% { transform: translateY(-5px); } 76%,84% { transform: translateY(-5px); } }
+
+  /* slow shoulder rolls — back view: both shoulders shrug UP, roll BACK
+     (blades slide together), then DROP below neutral. Easy to mirror. */
+  .anim-rolls2 .f-armBL { animation: r2-al var(--d) ease-in-out infinite; }
+  .anim-rolls2 .f-armBR { animation: r2-ar var(--d) ease-in-out infinite; }
+  .anim-rolls2 .f-bladeL { animation: r2-bl var(--d) ease-in-out infinite; }
+  .anim-rolls2 .f-bladeR { animation: r2-br var(--d) ease-in-out infinite; }
+  .anim-rolls2 .f-head { animation: r2-hd var(--d) ease-in-out infinite; }
+  @keyframes r2-al { 0%,100% { transform: translate(0,0); } 28% { transform: translate(0,-7px); } 52% { transform: translate(2.5px,-3px); } 74% { transform: translate(0,2.5px); } }
+  @keyframes r2-ar { 0%,100% { transform: translate(0,0); } 28% { transform: translate(0,-7px); } 52% { transform: translate(-2.5px,-3px); } 74% { transform: translate(0,2.5px); } }
+  @keyframes r2-bl { 0%,28%,74%,100% { transform: translate(0,0); } 52% { transform: translate(4.5px,-2px); } }
+  @keyframes r2-br { 0%,28%,74%,100% { transform: translate(0,0); } 52% { transform: translate(-4.5px,-2px); } }
+  @keyframes r2-hd { 0%,100% { transform: translateY(0); } 28% { transform: translateY(1.5px); } 74% { transform: translateY(-1px); } }
+
+  /* shoulder-blade pinches — back view: blades slide together, elbows draw back */
+  .anim-pinch2 .f-bladeL { animation: pb-l var(--d) ease-in-out infinite; }
+  .anim-pinch2 .f-bladeR { animation: pb-r var(--d) ease-in-out infinite; }
+  .anim-pinch2 .f-armBL { transform-origin: 53px 52px; animation: pb-al var(--d) ease-in-out infinite; }
+  .anim-pinch2 .f-armBR { transform-origin: 67px 52px; animation: pb-ar var(--d) ease-in-out infinite; }
+  .anim-pinch2 .f-head { animation: pb-head var(--d) ease-in-out infinite; }
+  @keyframes pb-l { 0%,100% { transform: translateX(0); } 25%,55% { transform: translateX(4.5px); } }
+  @keyframes pb-r { 0%,100% { transform: translateX(0); } 25%,55% { transform: translateX(-4.5px); } }
+  @keyframes pb-al { 0%,100% { transform: rotate(0); } 25%,55% { transform: rotate(14deg); } }
+  @keyframes pb-ar { 0%,100% { transform: rotate(0); } 25%,55% { transform: rotate(-14deg); } }
+  @keyframes pb-head { 0%,100% { transform: translateY(0); } 25%,55% { transform: translateY(-1.5px); } }
+
+  /* hidden leg extensions — shin+foot rotate as one rigid unit about the knee */
+  .anim-legext .f-shin, .anim-legext .f-foot2 { transform-origin: 86px 90px; animation: le-ext var(--d) ease-in-out infinite; }
+  .anim-legext .f-thigh { animation: le-fire var(--d) ease-in-out infinite; }
+  @keyframes le-ext { 0%,100% { transform: rotate(0); } 20%,55% { transform: rotate(-86deg); } 85% { transform: rotate(-8deg); } }
+  @keyframes le-fire { 0%,100% { stroke: var(--accent); } 25%,50% { stroke: var(--ink); } }
+
+  /* under-desk ankle circles — feet lifted, tracing slow circles */
+  .anim-ankles .f-shin, .anim-ankles .f-shinB { animation: ak-lift var(--d) linear infinite; }
+  .anim-ankles .f-foot2 { transform-origin: 86px 128px; animation: ak-circ var(--d) linear infinite; }
+  .anim-ankles .f-footB { transform-origin: 86px 128px; animation: ak-circ var(--d) linear infinite; animation-delay: calc(var(--d) / -2); }
+  @keyframes ak-lift { 0%,100% { transform: translateY(-6px); } }
+  @keyframes ak-circ { 0%,100% { transform: translateY(-6px) rotate(14deg); } 25% { transform: translateY(-9px) rotate(0deg); } 50% { transform: translateY(-6px) rotate(-14deg); } 75% { transform: translateY(-3px) rotate(0deg); } }
+
+
+  .night-note {
+    background: #fbf0da; border-radius: 16px;
+    padding: 14px 16px; font-size: 13.5px; line-height: 1.55; color: #8a6a2a; margin-bottom: 16px;
+  }
+  .night-note b { color: var(--warn); font-weight: 700; }
+
+  /* ---------- results ---------- */
+  .delta-box { text-align: center; padding: 16px 0 8px; }
+  .delta-box .d { font-size: 76px; font-weight: 800; line-height: 1; letter-spacing: -3px; }
+  .delta-box .d.good { color: var(--accent); }
+  .delta-box .d.flat { color: var(--warn); }
+  .delta-box .cap { font-size: 14px; color: var(--ink2); font-weight: 500; margin-top: 12px; }
+  .cal-note { font-size: 13.5px; color: var(--ink2); line-height: 1.75; }
+  .cal-note b { color: var(--ink); font-weight: 700; }
+  .hist { display: flex; gap: 5px; align-items: flex-end; height: 60px; margin-top: 12px; }
+  .hist .bar { flex: 1; background: var(--accent); border-radius: 5px 5px 0 0; min-height: 4px; opacity: .85; }
+  .hist .bar.up { background: #d8b25a; }
+
+  /* ---------- You tab ---------- */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .stat { background: var(--card); border-radius: 20px; padding: 18px; box-shadow: 0 1px 3px rgba(60,50,30,.04); }
+  .stat .sv { font-size: 30px; font-weight: 800; letter-spacing: -1px; color: var(--accent); line-height: 1.1; }
+  .stat .sl { font-size: 12px; color: var(--ink2); font-weight: 600; margin-top: 4px; }
+
+  .tstate { font-size: 13px; color: var(--accent); font-weight: 600; margin-bottom: 8px; }
+  .tr { font-size: 13.5px; color: var(--ink2); line-height: 1.65; }
+  .rec {
+    margin-top: 14px; padding: 13px 15px; background: var(--accent-soft);
+    border-radius: 14px; font-size: 13px; line-height: 1.55; color: var(--ink2);
+  }
+  .rec b { color: var(--accent); font-weight: 700; }
+  .rec-badge { font-size: 10.5px; color: var(--accent); margin-left: 8px; vertical-align: middle; font-weight: 700; }
+  .ex-blurb { margin-top: 14px; font-size: 13px; color: var(--ink2); line-height: 1.65; }
+  .ex-blurb b { color: var(--ink); font-weight: 700; }
+
+  .disclaimer { font-size: 11.5px; color: #a89f8f; line-height: 1.6; margin-top: 30px; text-align: center; }
+</style>
+<!-- Meta pixel (added 2026-07-17, Jonny's call: revises the earlier no-pixel rule).
+     Fires ONLY on the live site hostnames, never on local/offline copies.
+     Sends PageView, a Lead event on waitlist join, and content-free funnel steps
+     (RxViewed / SnackStart / SnackComplete / WaitlistViewed — added 2026-07-20, Jonny's
+     call, disclosure widened to match). Automatic advanced matching stays off.
+     It never sees moods, ratings, results, or anything else inside the app. -->
+<script>
+(function(){
+  var LIVE = ["settlemoves.com","www.settlemoves.com","snackrx.thekenclub.com","brilliant-tarsier-4280f9.netlify.app"];
+  if (LIVE.indexOf(location.hostname) === -1) return;
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+  document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '199999138000739');
+  fbq('track', 'PageView');
+})();
+</script>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <button class="logo" id="logo-home" aria-label="Back to home">Settle<span>.</span></button>
+      <div class="tagline">movement snacks for your mind</div>
+    </div>
+    <div class="head-right">
+      <span class="streak-chip" id="streakChip" style="display:none"></span>
+      <button class="voice-btn" id="voiceToggle" aria-label="Toggle voice guide"></button>
+    </div>
+  </header>
+
+  <!-- ============ TODAY TAB ============ -->
+  <section class="screen" id="tab-today">
+    <div class="greet-cap" id="today-date"></div>
+    <div class="sloth-hello" id="today-dog">
+      <svg width="80" height="98" viewBox="-70 -80 140 168" aria-hidden="true"><path d="M 30 -8 C 46 -20 54 -38 52 -54" stroke="#D8A868" stroke-width="15" fill="none" stroke-linecap="round"/><circle cx="52" cy="-56" r="8" fill="#D8A868"/><g stroke="#B8834A" stroke-width="2.5" fill="none" stroke-linecap="round"><path d="M 47 -62 L 47 -58"/><path d="M 52 -63 L 52 -59"/><path d="M 57 -61 L 57 -57"/></g><path d="M 34 40 C 48 38 56 30 58 20" stroke="#D8A868" stroke-width="10" fill="none" stroke-linecap="round"/><path d="M 62 26 q 6 -6 4 -12 M 66 34 q 8 -4 8 -10" stroke="#F47D31" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".6"/><ellipse cx="0" cy="26" rx="38" ry="34" fill="#D8A868"/><ellipse cx="0" cy="30" rx="24" ry="22" fill="#EDD9B5"/><path d="M -18 52 C -20 62 -18 70 -14 76 M 18 52 C 20 62 18 70 14 76" stroke="#D8A868" stroke-width="13" fill="none" stroke-linecap="round"/><ellipse cx="-13" cy="77" rx="8" ry="5" fill="#B8834A"/><ellipse cx="13" cy="77" rx="8" ry="5" fill="#B8834A"/><path d="M -28 12 C -40 22 -44 34 -40 44" stroke="#D8A868" stroke-width="14" fill="none" stroke-linecap="round"/><circle cx="-41" cy="46" r="7.5" fill="#D8A868"/><circle cx="0" cy="-34" r="34" fill="#D8A868"/><path d="M -26 -58 C -42 -60 -50 -44 -48 -26 C -47 -16 -42 -12 -36 -14 C -30 -17 -26 -30 -26 -58 Z" fill="#B8834A"/><path d="M 26 -58 C 42 -60 50 -44 48 -26 C 47 -16 42 -12 36 -14 C 30 -17 26 -30 26 -58 Z" fill="#B8834A"/><ellipse cx="15" cy="-30" rx="13" ry="14" fill="#B8834A" opacity=".45"/><ellipse cx="-14" cy="-29" rx="10.5" ry="12" fill="#fff"/><ellipse cx="14" cy="-29" rx="10.5" ry="12" fill="#fff"/><circle cx="-12.5" cy="-27.5" r="6" fill="#2D2A26"/><circle cx="15.5" cy="-27.5" r="6" fill="#2D2A26"/><circle cx="-10.5" cy="-29.8" r="2.4" fill="#fff"/><circle cx="17.5" cy="-29.8" r="2.4" fill="#fff"/><ellipse cx="0" cy="-14" rx="15" ry="11" fill="#F2E7CF"/><ellipse cx="0" cy="-19" rx="7" ry="5" fill="#3E3428"/><path d="M -9 -13 Q 0 -2 9 -13 Q 0 -8 -9 -13 Z" fill="#3E3428"/><path d="M -3.5 -6 Q 0 -3 3.5 -6 L 3.5 -8.5 Q 0 -6 -3.5 -8.5 Z" fill="#E88C8C"/><path d="M -22 -2 C -10 4 10 4 22 -2 L 20 6 C 9 10 -9 10 -20 6 Z" fill="#F47D31"/><circle cx="0" cy="9" r="4.5" fill="#F0C75E"/></svg>
+      <div class="sloth-bubble">
+        <div class="greet" id="today-greet"></div>
+        <div class="greet-cap" id="today-welcome" style="margin-top:3px"></div>
+      </div>
+    </div>
+
+
+    <div class="night-note" id="night-note" style="display:none">
+      It's late. A heart-pounding burst now can make it harder to fall asleep. <b>Winding down</b> is the gentlest pick tonight.
+    </div>
+
+    <div class="sechead">
+      <h3>How are you arriving?</h3>
+      <button id="see-all-states">See all</button>
+    </div>
+    <div class="hrow" id="state-row"></div>
+
+    <div class="sechead"><h3>Your day</h3></div>
+    <div id="timeline"></div>
+
+    <div class="card" id="wl4-card" style="margin-top:16px">
+      <div id="wl4-form">
+        <div class="label">Want more?</div>
+        <p class="sub" style="margin:8px 0 4px">Progress that follows you between sessions, new moves, reminders and more. Join free, first in line at launch.</p>
+        <input class="wl-in" type="email" id="wl4-email" placeholder="Email" autocomplete="email" inputmode="email">
+        <button class="btn" id="wl4-join" style="margin-top:12px">Get early access, free</button>
+        <p class="sub" id="wl4-note" style="display:none; margin:10px 0 0; color:#c0392b"></p>
+      </div>
+      <div id="wl4-done" style="display:none">
+        <div class="label">You're in 🎉</div>
+        <p class="sub" style="margin:8px 0 0">You're first in line. The full app lands in your inbox the moment it's ready.</p>
+        <button class="btn ghost a2hs-open" style="margin-top:6px">Put Settle on your home screen</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ EXPLORE TAB ============ -->
+  <section class="screen" id="tab-explore">
+    <div class="greet-cap">Explore</div>
+    <div class="greet">Pick your minute</div>
+
+    <div class="sechead" style="margin-top:6px"><h3>By how you feel</h3></div>
+    <div id="state-pick"></div>
+
+    <div class="sechead"><h3>Invisible, safe at your desk</h3></div>
+    <p class="sub" style="margin-bottom:12px">No one around you will notice a thing. Seated, silent, zero setup.</p>
+    <div id="lib-desk"></div>
+
+    <div class="sechead"><h3>Full movement</h3></div>
+    <p class="sub" style="margin-bottom:12px">For a private room, home, or outside, when you can actually move.</p>
+    <div id="lib-open"></div>
+
+    <div class="sechead"><h3>Wind down, works anywhere</h3></div>
+    <p class="sub" style="margin-bottom:12px">Breath protocols are invisible by design. Also the right pick near bedtime.</p>
+    <div id="lib-calm"></div>
+  </section>
+
+  <!-- ============ YOU TAB ============ -->
+  <section class="screen" id="tab-you">
+    <div class="greet-cap">You</div>
+    <div class="greet">Your progress</div>
+    <div class="stat-grid">
+      <div class="stat"><div class="sv" id="yo-streak">0</div><div class="sl">day streak</div></div>
+      <div class="stat"><div class="sv" id="yo-sess">0</div><div class="sl">total snacks</div></div>
+      <div class="stat"><div class="sv" id="yo-drop">–</div><div class="sl">avg settling</div></div>
+      <div class="stat"><div class="sv" id="yo-cal">Standard</div><div class="sl">your dose level</div></div>
+    </div>
+    <div class="card">
+      <div class="label">Badges</div>
+      <div class="badge-grid" id="badges"></div>
+    </div>
+    <div class="card" id="yo-hist-card" style="display:none">
+      <div class="label">Settling per session</div>
+      <div class="hist" id="yo-hist"></div>
+    </div>
+    <div class="card" id="wl2-card">
+      <div id="wl2-form">
+        <div class="label">Want more?</div>
+        <p class="sub" style="margin:8px 0 4px">Progress that follows you between sessions, new moves, reminders and more. Join free, first in line at launch.</p>
+        <input class="wl-in" type="email" id="wl2-email" placeholder="Email" autocomplete="email" inputmode="email">
+        <button class="btn" id="wl2-join" style="margin-top:12px">Get early access, free</button>
+        <p class="sub" id="wl2-note" style="display:none; margin:10px 0 0; color:#c0392b"></p>
+      </div>
+      <div id="wl2-done" style="display:none">
+        <div class="label">You're in 🎉</div>
+        <p class="sub" style="margin:8px 0 0">You're first in line. The full app lands in your inbox the moment it's ready.</p>
+        <button class="btn ghost a2hs-open" style="margin-top:6px">Put Settle on your home screen</button>
+      </div>
+    </div>
+    <div class="card" id="a2hs-card" style="display:none">
+      <div class="label">Settle on your home screen</div>
+      <p class="sub" style="margin:8px 0 4px">Same app, one tap away. No app store, nothing to download.</p>
+      <button class="btn dark" id="btn-a2hs" style="margin-top:8px">Show me how</button>
+    </div>
+    <div class="card">
+      <div class="label">Settings</div>
+      <button class="btn dark" id="btn-edit-baseline" style="margin-top:4px">Tune your baseline</button>
+      <button class="btn ghost" id="btn-export">Export my data (JSON)</button>
+      <button class="btn ghost" id="btn-reset" style="color:#c0392b">Start fresh (erases everything)</button>
+    </div>
+    <div class="disclaimer">
+      Your moods, results and streaks stay in this browser. On the live site, Meta's ad
+      pixel counts visits, basic activity and waitlist signups; signups are matched to
+      ads using a privacy-protected, hashed version of your email. It never sees your
+      moods, ratings or results. If you've joined the waitlist, we also count
+      your return visits and completed snacks — that same hashed email and a session
+      count, never what happened in them.
+    </div>
+    <div class="disclaimer">
+      Settle is a wellness tool, not medical care. It doesn't diagnose or treat anxiety
+      disorders. If anxiety is disrupting your life, a clinician can help. Stop any exercise
+      that causes pain, chest discomfort, or dizziness.
+    </div>
+  </section>
+
+  <!-- ============ PRESCRIPTION ============ -->
+  <section class="screen" id="scr-rx">
+    <button class="back-link" id="btn-rx-back">‹ Back</button>
+    <h1 id="rx-head">Your prescription</h1>
+
+    <div class="sloth-hello" id="rx-dog" style="margin:10px 0 0">
+      <svg width="54" height="46" viewBox="-54 -70 108 78" aria-hidden="true"><circle cx="0" cy="-34" r="34" fill="#D8A868"/><path d="M -26 -58 C -42 -60 -50 -44 -48 -26 C -47 -16 -42 -12 -36 -14 C -30 -17 -26 -30 -26 -58 Z" fill="#B8834A"/><path d="M 26 -58 C 42 -60 50 -44 48 -26 C 47 -16 42 -12 36 -14 C 30 -17 26 -30 26 -58 Z" fill="#B8834A"/><ellipse cx="15" cy="-30" rx="13" ry="14" fill="#B8834A" opacity=".45"/><ellipse cx="-14" cy="-29" rx="10.5" ry="12" fill="#fff"/><ellipse cx="14" cy="-29" rx="10.5" ry="12" fill="#fff"/><circle cx="-12.5" cy="-27.5" r="6" fill="#2D2A26"/><circle cx="15.5" cy="-27.5" r="6" fill="#2D2A26"/><circle cx="-10.5" cy="-29.8" r="2.4" fill="#fff"/><circle cx="17.5" cy="-29.8" r="2.4" fill="#fff"/><ellipse cx="0" cy="-14" rx="15" ry="11" fill="#F2E7CF"/><ellipse cx="0" cy="-19" rx="7" ry="5" fill="#3E3428"/><path d="M -9 -13 Q 0 -2 9 -13 Q 0 -8 -9 -13 Z" fill="#3E3428"/><path d="M -3.5 -6 Q 0 -3 3.5 -6 L 3.5 -8.5 Q 0 -6 -3.5 -8.5 Z" fill="#E88C8C"/></svg>
+      <div class="sloth-bubble" id="rx-dog-line" style="margin-bottom:8px; font-size:13px">Let's give your mind one job.</div>
+    </div>
+
+    <div class="rx-hero">
+      <div class="figwrap" id="rx-fig"></div>
+      <div class="exname" id="rx-exname"></div>
+      <div class="exctx" id="rx-exctx"></div>
+      <div class="ctxseg" id="rx-ctxseg">
+        <button data-v="public">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><circle cx="7" cy="7" r="3.2" fill="currentColor"/><path d="M2 16c.8-2.6 2.8-4 5-4s4.2 1.4 5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="14.5" cy="7.5" r="2.4" fill="currentColor" opacity=".55"/><path d="M13 12.5c1.8.2 3.4 1.4 4 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".55"/></svg>
+          People around
+        </button>
+        <button data-v="free">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="4" r="2.6" fill="currentColor"/><path d="M10 7.5v6M10 9l-6-2M10 9l6-2M10 13.5l-4 5M10 13.5l4 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Room to move
+        </button>
+      </div>
+      <div id="hero-reps">
+        <div class="rx-stepper">
+          <button class="stepbtn" id="rep-minus" aria-label="Fewer reps">−</button>
+          <div class="n" id="rx-reps">–</div>
+          <button class="stepbtn" id="rep-plus" aria-label="More reps">+</button>
+        </div>
+        <div class="u" id="rx-unit">reps · 60 seconds</div>
+        <div class="u" id="rx-know" style="display:none; margin-top:8px; color:var(--ink); font-weight:600"></div>
+        <div class="count-cue" id="rx-countcue" style="display:none">☝️ Count every one, out loud or in your head</div>
+      </div>
+      <div id="hero-calm" style="display:none">
+        <div class="n" id="rx-heropat" style="font-size:24px; letter-spacing:0; font-weight:500">–</div>
+        <div class="u" id="rx-cycles-u">60 seconds</div>
+      </div>
+    </div>
+
+    <div class="anx-row">
+      <span>Settled → spiralling</span>
+      <input type="range" id="in-preanx" min="0" max="10" value="6">
+      <b id="preanx-val">6</b>
+    </div>
+
+    <button class="btn" id="btn-start">Begin</button>
+    <button class="softlink" id="btn-tune" style="display:none; padding:12px 0 0; font-size:13px">Dose estimated. Tune your baseline (10s)</button>
+
+    <details class="reveal">
+      <summary>Why this?</summary>
+      <div class="reveal-body">
+        <div class="tstate" id="rx-state"></div>
+        <div class="tr" id="rx-rationale"></div>
+        <div class="rec" id="rx-rec"></div>
+        <div class="ex-blurb" id="ex-blurb"></div>
+        <button class="softlink" id="btn-ease" style="display:none">Too much right now? Ease it down</button>
+        <div class="label" style="margin-top:20px">Choose a different one</div>
+        <div class="tier-pick" id="tier-pick"></div>
+        <div id="rx-rep-card" style="margin-top:16px">
+          <div class="rx-grid" id="rx-cells"></div>
+          <div class="footnote" id="rx-note"></div>
+        </div>
+        <div id="rx-calm-card" style="display:none; margin-top:16px">
+          <div class="rx-grid">
+            <div class="rx-cell"><div class="label">Protocol</div><div class="v small" id="rx-proto">–</div></div>
+            <div class="rx-cell"><div class="label">Goal</div><div class="v small">Down-shift</div></div>
+            <div class="rx-cell"><div class="label">Pattern</div><div class="v small" id="rx-pattern">–</div></div>
+            <div class="rx-cell"><div class="label">Basis</div><div class="v small">Parasympathetic tone</div></div>
+          </div>
+          <div class="footnote">A calming protocol, no heart-rate target. Let the exhale be longer than the inhale.</div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ TIMER ============ -->
+  <section class="screen timer-screen" id="scr-timer">
+    <div id="timer-exercise">
+      <div class="ring-wrap">
+        <svg width="240" height="240" viewBox="0 0 240 240">
+          <circle class="ring-bg" cx="120" cy="120" r="110"/>
+          <circle class="ring-fg" id="ring" cx="120" cy="120" r="110"/>
+        </svg>
+        <div class="t-num">
+          <div class="sec" id="t-sec">60</div>
+          <div class="lbl" id="t-ex"></div>
+        </div>
+      </div>
+      <div class="figwrap sm" id="t-fig"></div>
+      <div class="t-goal" id="t-goal"></div>
+      <div class="pace" id="t-paceline"></div>
+      <div class="milestone" id="milestone"></div>
+    </div>
+    <div id="timer-calm" style="display:none">
+      <div class="orb-wrap">
+        <div class="orb" id="orb"></div>
+        <div class="orb-phase" id="orb-phase">Get ready</div>
+      </div>
+      <div class="pace"><b id="calm-remain">60</b>s left</div>
+      <div class="milestone" id="calm-inst"></div>
+    </div>
+    <button class="btn ghost abort" id="btn-abort">Stop</button>
+  </section>
+
+  <!-- ============ FEEDBACK ============ -->
+  <section class="screen" id="scr-post">
+    <h1 id="p-post-title">Log the data</h1>
+    <p class="sub" id="p-post-sub">One slider and you're done.</p>
+    <div class="card">
+      <div class="label">Where's your head at?</div>
+      <div class="slider-wrap">
+        <input type="range" id="in-postanx" min="0" max="10" value="4">
+        <div class="slider-val" id="postanx-val">4</div>
+      </div>
+      <div class="slider-ends"><span>0 · settled</span><span>10 · spiralling</span></div>
+    </div>
+    <details class="reveal" id="post-extra">
+      <summary>Fine-tune your next dose (optional)</summary>
+      <div class="reveal-body">
+        <div class="card" id="post-reps-card">
+          <div class="label" id="post-reps-label">Reps completed</div>
+          <input type="number" id="in-reps" min="0" max="500" inputmode="numeric">
+        </div>
+        <div class="card" id="post-rpe-card">
+          <div class="label">How hard was that?</div>
+          <div class="slider-wrap">
+            <input type="range" id="in-rpe" min="1" max="10" value="6">
+            <div class="slider-val" id="rpe-val">6</div>
+          </div>
+          <div class="slider-ends"><span>1 · easy</span><span>10 · all-out</span></div>
+        </div>
+      </div>
+    </details>
+    <button class="btn" id="btn-post">Done</button>
+
+    <div class="card" id="wl5-card" style="margin-top:18px; text-align:left">
+      <div id="wl5-form">
+        <div class="label">Want more?</div>
+        <p class="sub" style="margin:8px 0 4px">The full app is coming. First in line, free, at launch.</p>
+        <input class="wl-in" type="email" id="wl5-email" placeholder="Email" autocomplete="email" inputmode="email">
+        <button class="btn" id="wl5-join" style="margin-top:12px">Get early access, free</button>
+        <p class="sub" id="wl5-note" style="display:none; margin:10px 0 0; color:#c0392b"></p>
+      </div>
+      <div id="wl5-done" style="display:none">
+        <div class="label">You're in 🎉</div>
+        <p class="sub" style="margin:8px 0 0">You're first in line. The full app lands in your inbox the moment it's ready.</p>
+        <button class="btn ghost a2hs-open" style="margin-top:6px">Put Settle on your home screen</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RESULTS ============ -->
+  <section class="screen" id="scr-result">
+    <h1 id="res-head">Nicely done.</h1>
+    <div class="delta-box">
+      <div id="res-sloth"><svg width="84" height="90" viewBox="-64 -78 128 152" aria-hidden="true"><path d="M 42 44 C 54 42 60 34 60 26" stroke="#D8A868" stroke-width="9" fill="none" stroke-linecap="round"/><ellipse cx="0" cy="24" rx="46" ry="36" fill="#D8A868"/><ellipse cx="0" cy="30" rx="28" ry="22" fill="#EDD9B5"/><ellipse cx="-17" cy="57" rx="10" ry="6" fill="#B8834A"/><ellipse cx="17" cy="57" rx="10" ry="6" fill="#B8834A"/><path d="M -37 26 C -41 40 -28 49 -11 49 M 37 26 C 41 40 28 49 11 49" stroke="#D8A868" stroke-width="12" fill="none" stroke-linecap="round"/><circle cx="-11" cy="49" r="6.5" fill="#D8A868"/><circle cx="11" cy="49" r="6.5" fill="#D8A868"/><circle cx="0" cy="-28" r="33" fill="#D8A868"/><path d="M -25 -52 C -40 -54 -47 -38 -45 -22 C -44 -13 -39 -9 -34 -11 C -28 -14 -25 -26 -25 -52 Z" fill="#B8834A"/><path d="M 25 -52 C 40 -54 47 -38 45 -22 C 44 -13 39 -9 34 -11 C 28 -14 25 -26 25 -52 Z" fill="#B8834A"/><ellipse cx="14" cy="-26" rx="12" ry="13" fill="#B8834A" opacity=".45"/><path d="M -20 -25 Q -14 -20 -8 -25" stroke="#2D2A26" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M 8 -25 Q 14 -20 20 -25" stroke="#2D2A26" stroke-width="3" fill="none" stroke-linecap="round"/><ellipse cx="0" cy="-10" rx="14" ry="10.5" fill="#F2E7CF"/><ellipse cx="0" cy="-15" rx="6.5" ry="4.5" fill="#3E3428"/><path d="M -7 -5 Q 0 0 7 -5" stroke="#3E3428" stroke-width="2.8" fill="none" stroke-linecap="round"/><path d="M -20 3 C -9 8 9 8 20 3 L 18 10 C 8 14 -8 14 -18 10 Z" fill="#F47D31"/><path d="M -44 -60 q 4 -7 11 -5 M 38 -66 q 7 -2 9 5" stroke="#F47D31" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".6"/><circle cx="-50" cy="-46" r="3" fill="#F47D31" opacity=".4"/><circle cx="52" cy="-52" r="3" fill="#F47D31" opacity=".4"/></svg></div>
+      <div class="d" id="res-delta">–</div>
+      <div class="cap" id="res-cap">the change</div>
+    </div>
+    <p class="sub" id="res-line" style="text-align:center; margin-top:16px"></p>
+    <div id="res-badges" style="display:none"></div>
+    <button class="btn dark" id="btn-breathe" style="display:none">Try a 1-minute breathing exercise</button>
+    <div class="card" id="wl-card" style="margin-top:16px; text-align:left">
+      <div id="wl-form">
+        <div class="label">Want more?</div>
+        <p class="sub" style="margin:8px 0 0">Progress that follows you between sessions, new moves, reminders and more. Your email puts you first in line, free, at launch.</p>
+        <p class="sub" id="wl-social" style="margin:6px 0 4px; color:var(--ink); font-weight:600"></p>
+        <input class="wl-in" type="email" id="wl-email" placeholder="Email" autocomplete="email" inputmode="email">
+        <button class="btn" id="wl-join" style="margin-top:12px">Get early access, free</button>
+        <p class="sub" id="wl-note" style="display:none; margin:10px 0 0; color:#c0392b"></p>
+      </div>
+      <div id="wl-done" style="display:none">
+        <div class="label">You're in 🎉</div>
+        <p class="sub" id="wl-done-line" style="margin:8px 0 0">You're first in line. The full app lands in your inbox the moment it's ready.</p>
+        <button class="btn ghost a2hs-open" style="margin-top:6px">Put Settle on your home screen</button>
+      </div>
+    </div>
+    <button class="btn" id="btn-again">Back to Today</button>
+    <details class="reveal">
+      <summary>Details</summary>
+      <div class="reveal-body">
+        <div class="card">
+          <div class="label" id="res-cal-label">Recalibration</div>
+          <div class="cal-note" id="res-cal"></div>
+        </div>
+        <div class="card" id="hist-card" style="display:none">
+          <div class="label">Settling per session</div>
+          <div class="hist" id="hist"></div>
+        </div>
+      </div>
+    </details>
+  </section>
+</div>
+
+<!-- ============ BASELINE SHEET (optional — dose is estimated until tuned) ============ -->
+<div class="sheet-mask" id="intake-sheet">
+  <div class="sheet">
+    <h3 id="intake-h">Tune your dose</h3>
+    <p>Ten seconds, once, never again. Until then we estimate from a typical baseline.</p>
+    <div class="field">
+      <div class="label">Age</div>
+      <input type="number" id="in-age" min="16" max="90" value="30" inputmode="numeric">
+    </div>
+    <div class="field" style="margin-bottom:0">
+      <div class="label">Activity level</div>
+      <div class="seg" id="seg-activity">
+        <button data-v="0">Sedentary</button>
+        <button data-v="1" class="sel">Light</button>
+        <button data-v="2">Moderate</button>
+        <button data-v="3">Active</button>
+      </div>
+    </div>
+    <button class="btn" id="btn-intake">Continue</button>
+  </div>
+</div>
+
+<!-- Floating waitlist pill: visible on all tabs until they join -->
+<button class="wl-fab" id="wl-fab" style="display:none">✨ Want more?</button>
+
+<!-- ============ BOTTOM NAV ============ -->
+<nav class="nav" id="nav">
+  <button data-tab="today" class="on">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    Today
+  </button>
+  <button data-tab="explore">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M15.5 8.5l-2 5-5 2 2-5 5-2z" fill="currentColor"/></svg>
+    Explore
+  </button>
+  <button data-tab="you">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4.5 20c1.2-3.4 4.1-5 7.5-5s6.3 1.6 7.5 5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+    You
+  </button>
+</nav>
+
+<!-- One-time waitlist sheet — appears after the second session that eased anxiety -->
+<div class="sheet-mask" id="wl-sheet">
+  <div class="sheet" style="text-align:center">
+    <div style="margin:2px auto 8px"><svg width="108" height="130" viewBox="-70 -80 140 168" aria-hidden="true"><path d="M 30 -8 C 46 -20 54 -38 52 -54" stroke="#D8A868" stroke-width="15" fill="none" stroke-linecap="round"/><circle cx="52" cy="-56" r="8" fill="#D8A868"/><g stroke="#B8834A" stroke-width="2.5" fill="none" stroke-linecap="round"><path d="M 47 -62 L 47 -58"/><path d="M 52 -63 L 52 -59"/><path d="M 57 -61 L 57 -57"/></g><path d="M 34 40 C 48 38 56 30 58 20" stroke="#D8A868" stroke-width="10" fill="none" stroke-linecap="round"/><path d="M 62 26 q 6 -6 4 -12 M 66 34 q 8 -4 8 -10" stroke="#F47D31" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".6"/><ellipse cx="0" cy="26" rx="38" ry="34" fill="#D8A868"/><ellipse cx="0" cy="30" rx="24" ry="22" fill="#EDD9B5"/><path d="M -18 52 C -20 62 -18 70 -14 76 M 18 52 C 20 62 18 70 14 76" stroke="#D8A868" stroke-width="13" fill="none" stroke-linecap="round"/><ellipse cx="-13" cy="77" rx="8" ry="5" fill="#B8834A"/><ellipse cx="13" cy="77" rx="8" ry="5" fill="#B8834A"/><path d="M -28 12 C -40 22 -44 34 -40 44" stroke="#D8A868" stroke-width="14" fill="none" stroke-linecap="round"/><circle cx="-41" cy="46" r="7.5" fill="#D8A868"/><circle cx="0" cy="-34" r="34" fill="#D8A868"/><path d="M -26 -58 C -42 -60 -50 -44 -48 -26 C -47 -16 -42 -12 -36 -14 C -30 -17 -26 -30 -26 -58 Z" fill="#B8834A"/><path d="M 26 -58 C 42 -60 50 -44 48 -26 C 47 -16 42 -12 36 -14 C 30 -17 26 -30 26 -58 Z" fill="#B8834A"/><ellipse cx="15" cy="-30" rx="13" ry="14" fill="#B8834A" opacity=".45"/><ellipse cx="-14" cy="-29" rx="10.5" ry="12" fill="#fff"/><ellipse cx="14" cy="-29" rx="10.5" ry="12" fill="#fff"/><circle cx="-12.5" cy="-27.5" r="6" fill="#2D2A26"/><circle cx="15.5" cy="-27.5" r="6" fill="#2D2A26"/><circle cx="-10.5" cy="-29.8" r="2.4" fill="#fff"/><circle cx="17.5" cy="-29.8" r="2.4" fill="#fff"/><ellipse cx="0" cy="-14" rx="15" ry="11" fill="#F2E7CF"/><ellipse cx="0" cy="-19" rx="7" ry="5" fill="#3E3428"/><path d="M -9 -13 Q 0 -2 9 -13 Q 0 -8 -9 -13 Z" fill="#3E3428"/><path d="M -3.5 -6 Q 0 -3 3.5 -6 L 3.5 -8.5 Q 0 -6 -3.5 -8.5 Z" fill="#E88C8C"/><path d="M -22 -2 C -10 4 10 4 22 -2 L 20 6 C 9 10 -9 10 -20 6 Z" fill="#F47D31"/><circle cx="0" cy="9" r="4.5" fill="#F0C75E"/></svg></div>
+    <h3 id="wls-h">Want more?</h3>
+    <p id="wls-p">The full app adds progress that follows you between sessions, new moves, reminders and more. Join free, be first in line at launch.</p>
+    <input class="wl-in" type="email" id="wls-email" placeholder="Email" autocomplete="email" inputmode="email">
+    <button class="btn" id="wls-join" style="margin-top:12px">Get early access, free</button>
+    <button class="btn ghost" id="wls-later">No thanks</button>
+    <p class="sub" id="wls-note" style="display:none; margin:8px 0 0; color:#c0392b"></p>
+  </div>
+</div>
+
+<!-- Add-to-home-screen sheet: opt-in, out of the funnel (opened from the You tab) -->
+<div class="sheet-mask" id="a2hs-sheet">
+  <div class="sheet">
+    <h3>Settle, one tap away</h3>
+    <p>Put Settle on your home screen. It opens full-screen like an app. No app store, nothing to download.</p>
+    <div id="a2hs-ios">
+      <p style="margin-bottom:8px"><b>1.</b> Tap the Share button in Safari (the square with the arrow).</p>
+      <p style="margin-bottom:8px"><b>2.</b> Scroll down and tap <b>Add to Home Screen</b>.</p>
+      <p><b>3.</b> Tap <b>Add</b>. That's it.</p>
+    </div>
+    <div id="a2hs-other" style="display:none">
+      <p style="margin-bottom:8px"><b>1.</b> Open your browser's menu.</p>
+      <p><b>2.</b> Tap <b>Add to Home screen</b> or <b>Install app</b>.</p>
+    </div>
+    <button class="btn ghost" id="a2hs-close" style="margin-top:4px">Done</button>
+  </div>
+</div>
+
+<!-- Static form so Netlify's build bot registers "waitlist" — submissions arrive via fetch below -->
+<form name="waitlist" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
+  <input type="text" name="name"><input type="email" name="email">
+  <input type="text" name="sessions"><input type="text" name="utm_source"><input type="text" name="utm_content"><input type="text" name="event_id"><input type="text" name="fbp"><input type="text" name="fbc"><input type="text" name="bot-field">
+</form>
+
+<!-- Static form so Netlify registers "checkin" — joined users' return visits: hashed email + session count, nothing else -->
+<form name="checkin" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
+  <input type="text" name="eh"><input type="text" name="sessions"><input type="text" name="kind"><input type="text" name="utm_source"><input type="text" name="day"><input type="text" name="bot-field">
+</form>
+
+<script>
+"use strict";
+
+/* ================= VOICE LINES =================
+   Every spoken line lives here with a stable id. If a file exists at
+   voice/<id>.mp3 next to this HTML, it plays instead of device TTS —
+   so the whole guide can be pre-recorded once (HeyGen, ElevenLabs, a
+   human) and dropped in as a folder. See voice-script.txt / the
+   generate-voice-pack script for batch generation. */
+const VOICE_LINES = {
+  voice_on:   "Voice on. I'll guide you through.",
+
+  /* intros — fixed on purpose (no dynamic numbers) so they're pre-recordable */
+  intro_racing:   "Let's give your mind one job. Your target's on screen... press begin when you're ready.",
+  intro_wired:    "You've got fuel to burn... let's burn it. Press begin when you're ready.",
+  intro_low:      "We're not chasing calm — we're chasing a spark. Whenever you're ready.",
+  intro_tense:    "Let's discharge it now... and settle right after. Whenever you're ready.",
+  intro_winddown: "Let's downshift, not rev up. Press begin... and follow my voice.",
+  intro_generic:  "Your minute's ready. Press begin whenever you are.",
+  intro_calm:     "When you're ready... press begin, and follow my voice.",
+
+  /* target announcement — whole seamless phrases; doses snap to this same
+     grid, so the spoken number always matches the screen exactly */
+  tgt_count: "Count every one — out loud, or in your head.",
+  tp_4: "Your target — four.", tp_5: "Your target — five.",
+  tp_6: "Your target — six.", tp_7: "Your target — seven.",
+  tp_8: "Your target — eight.", tp_9: "Your target — nine.",
+  tp_10: "Your target — ten.", tp_12: "Your target — twelve.",
+  tp_14: "Your target — fourteen.", tp_16: "Your target — sixteen.",
+  tp_18: "Your target — eighteen.", tp_20: "Your target — twenty.",
+  tp_25: "Your target — twenty-five.", tp_30: "Your target — thirty.",
+  tp_35: "Your target — thirty-five.", tp_40: "Your target — forty.",
+  tp_45: "Your target — forty-five.", tp_50: "Your target — fifty.",
+  tp_60: "Your target — sixty.", tp_70: "Your target — seventy.",
+  tp_80: "Your target — eighty.", tp_90: "Your target — ninety.",
+  tp_100: "Your target — one hundred.", tp_120: "Your target — one hundred twenty.",
+  tp_150: "Your target — one hundred fifty.", tp_200: "Your target — two hundred.",
+  tp_250: "Your target — two hundred fifty.", tp_300: "Your target — three hundred.",
+  /* unit words — spoken right after the number ("...forty-five... reps") */
+  unit_reps: "reps", unit_cycles: "cycles", unit_taps: "taps", unit_rolls: "rolls",
+  unit_folds: "folds", unit_circles: "circles", unit_extensions: "extensions", unit_pinches: "pinches",
+
+  /* results */
+  res_good: "Nicely done. Your anxiety eased in one minute — that's the whole idea.",
+  res_zero: "You showed up. No shift yet... the settling often lands a few minutes after. A slow minute of breathing can help it along.",
+  res_neg:  "You showed up. One snack doesn't always land — let's try a breathing exercise. A long exhale reaches what movement sometimes can't.",
+
+  /* breathing + stretch steps */
+  br_in:   "Breathe in",
+  br_hold: "Hold",
+  br_out:  "Breathe out slowly",
+  br_nose: "Inhale through your nose",
+  br_in2:  "A second short inhale",
+  br_long: "Loooong exhale",
+  st_shoulders: "Roll your shoulders back... slow",
+  st_right: "Ear toward your right shoulder",
+  st_left:  "Ear toward your left shoulder",
+  st_reach: "Reach up tall... then fold forward",
+  st_hug:   "Hug your knees... breathe slow",
+
+  /* mood cues — prepended when a classic exercise is run under a mood */
+  cue_racing: "Every rep is a number to count. That's the loop losing its grip.",
+  cue_wired:  "This is the buzzing energy leaving your body — you're spending it, not storing it.",
+  cue_low:    "Movement is the fastest lever on a flat mood. You're pulling it right now.",
+  cue_tense:  "Shoulders down. The calm lands right after you stop — that's the mechanism, not a bonus.",
+
+  /* ---- milestone scripts, per exercise ---- */
+  /* heel-count patterns — in my head, at a desk */
+  ms_heelpat_0:  "Left heel up... down. Right heel... then both together. Count each full cycle.",
+  ms_heelpat_10: "Keep the order — left, right, both. That's the pattern.",
+  ms_heelpat_22: "The looping thought needs the same bandwidth you're using to count. It can't have both.",
+  ms_heelpat_34: "Lost the pattern? Start again at one... the counting is the exercise.",
+  ms_heelpat_46: "Toes stay planted... just the heels. Steady.",
+  ms_heelpat_56: "Finish the cycle you're in... then let it go.",
+
+  /* counted squats — in my head, room to move */
+  ms_sqcount_0:  "Slow squats... and count each one out. One number per rep.",
+  ms_sqcount_10: "Keep the count exact. That's the anchor.",
+  ms_sqcount_22: "The looping thought needs the same bandwidth you're using to count... it can't have both.",
+  ms_sqcount_34: "Lost count? Start again at one. The counting is the exercise.",
+  ms_sqcount_46: "Steady rhythm... almost there.",
+  ms_sqcount_56: "Last few... strong finish.",
+
+  /* silent heel drums — wired, at a desk */
+  ms_drums_0:  "Toes planted... now drum your heels, fast. A sprint under the desk.",
+  ms_drums_10: "Quicker than comfortable. This is the buzz finding an exit.",
+  ms_drums_22: "That jittery energy is adrenaline... your legs are burning it as fuel right now.",
+  ms_drums_34: "Halfway. Heels higher... keep it quiet, keep it quick.",
+  ms_drums_46: "Nobody can see this. Empty the energy anyway.",
+  ms_drums_56: "Last seconds... sprint.",
+
+  /* jumping jacks — wired, room to move */
+  ms_jacks_0:  "You already know this one. Arms and legs wide... go.",
+  ms_jacks_10: "Heart rate's climbing. This is the buzz finding an exit.",
+  ms_jacks_22: "That jittery energy is adrenaline... your muscles are burning it as fuel right now.",
+  ms_jacks_34: "Halfway. Keep the arms honest — all the way up.",
+  ms_jacks_46: "Short bursts like this reliably drop measured anxiety. Keep going.",
+  ms_jacks_56: "Empty the tank.",
+
+  /* calf pump — low, at a desk */
+  ms_calfpump_0:  "Sit tall... crown of the head up. Slow heel raises, and breathe with them.",
+  ms_calfpump_10: "Each raise pumps pooled blood back into circulation. The calf is your second heart.",
+  ms_calfpump_22: "Inhale as you rise... exhale as you lower.",
+  ms_calfpump_34: "Notice the posture. Tall and open is the opposite shape of flat.",
+  ms_calfpump_46: "A little quicker now if you like... we're chasing a spark, not a workout.",
+  ms_calfpump_56: "Last few... nice.",
+
+  /* march in place — low, room to move */
+  ms_march_0:  "Easy rhythm. Knees up to hip height... that's all this is.",
+  ms_march_10: "Heart rate's lifting gently — enough to start clearing the fog.",
+  ms_march_22: "Movement is the fastest lever on a flat mood... you're pulling it.",
+  ms_march_34: "Halfway. Let the arms swing... a little taller through the spine.",
+  ms_march_46: "Notice anything lifting? Even five percent counts.",
+  ms_march_56: "Last few steps... nice and steady.",
+
+  /* slow shoulder rolls — tense, at a desk */
+  ms_rolls_0:  "Shoulders up to your ears... roll them back, and let them drop. Slow.",
+  ms_rolls_10: "Each roll ends lower than it started. That drop is the exercise.",
+  ms_rolls_22: "You've been braced without noticing. This is the un-bracing.",
+  ms_rolls_34: "Halfway... jaw loose, breath slow. Keep rolling.",
+  ms_rolls_46: "Notice the space between your shoulders and your ears now.",
+  ms_rolls_56: "Last rolls... let them land heavy.",
+
+  /* rag-doll folds — tense, room to move */
+  ms_fold_0:  "Soft knees... chin down, and roll forward, one vertebra at a time.",
+  ms_fold_10: "Hang heavy. Let the head and arms just... dangle.",
+  ms_fold_22: "You've been braced without noticing. Gravity is doing the un-bracing.",
+  ms_fold_34: "Sway a little if it feels good... then roll back up, slow.",
+  ms_fold_46: "Shoulders land away from your ears... and fold again.",
+  ms_fold_56: "Last one... come up slow, and let everything settle.",
+
+  /* hidden leg extensions — desk alternate */
+  ms_legext_0:  "Right leg out straight... squeeze the thigh hard. Hold.",
+  ms_legext_10: "Lower it slow... don't let it touch the floor. Switch legs.",
+  ms_legext_22: "Count each extension. The squeeze and the count are the whole job.",
+  ms_legext_34: "That loop in your head needs the bandwidth you're counting with.",
+  ms_legext_46: "Slow is the point... strong squeeze at the top.",
+  ms_legext_56: "Finish this one... then let it go.",
+
+  /* under-desk ankle circles — desk alternate */
+  ms_ankles_0:  "Feet off the floor... slow circles from the ankles.",
+  ms_ankles_10: "Smooth and round... both directions work.",
+  ms_ankles_22: "This flushes the restless energy pooling in your lower legs.",
+  ms_ankles_34: "Halfway. Reverse the direction.",
+  ms_ankles_46: "Keep the circles slow... let the rest of you be still.",
+  ms_ankles_56: "Last circles... then feet down, settled.",
+
+  /* shoulder-blade pinches — desk alternate */
+  ms_pinch_0:  "Pull your shoulder blades back and down... squeeze them together. Hold.",
+  ms_pinch_10: "Release. Feel the chest open where you were hunched.",
+  ms_pinch_22: "This is the exact opposite of screen posture... that's why it works.",
+  ms_pinch_34: "Again — back and down, away from the ears. Hold it.",
+  ms_pinch_46: "Notice how much taller you're sitting now.",
+  ms_pinch_56: "One last pinch... then let everything drop.",
+
+  /* classics — honest generic script */
+  ms_gen_0:  "Go. Count every one — that's the anchor.",
+  ms_gen_8:  "Heart rate's climbing... blood flow to working muscle is already up several-fold.",
+  ms_gen_18: "A pounding heart here isn't panic. It's the dose working.",
+  ms_gen_28: "Halfway. Your muscles are burning off circulating adrenaline right now.",
+  ms_gen_40: "Single short bouts of movement reliably lower measured state anxiety.",
+  ms_gen_50: "Nearly there... steady rhythm.",
+  ms_gen_56: "Final seconds. Empty the tank.",
+};
+function line(vid) { return VOICE_LINES[vid] || ""; }
+
+/* ================= DATA ================= */
+
+/* Contexts — one binary, asked just-in-time, remembered after. */
+const CONTEXTS = [
+  { id: "public", label: "People around", sub: "Open office, café, anywhere visible", set: "desk",
+    pill: "Invisible moves ready. No one will notice a thing." },
+  { id: "free",   label: "Room to move",  sub: "Private room, home, outside", set: "open",
+    pill: "Full movement unlocked." },
+];
+function ctxById(id) { return CONTEXTS.find(c => c.id === id) || CONTEXTS[0]; }
+
+/* Exercises. Each mood has a signature move per context (sig), plus classics.
+   gauge = which physiology card is honest for this movement:
+     hr (Karvonen zone) · focus (working-memory load) ·
+     release (tension contrast) · pump (muscle pump)
+   paced = the voice paces you; no rep counting, no rep target. */
+const EXERCISES = [
+  /* ---- signature · desk (invisible micro-motion — heels & shoulders) ---- */
+  { id: "heelpat", set: "desk", name: "Heel-count patterns", unit: "cycles", gauge: "focus",
+    desc: "Invisible · left heel, right heel, both — count the cycles", baseRpm: 12, hrFactor: 0.45,
+    blurb: "Toes planted, heels rise in a three-beat pattern — left, right, both together — while you count each full cycle. Holding the sequence AND the count saturates the working memory rumination runs on, with nothing visible above the desk." },
+  { id: "drums", set: "desk", name: "Silent heel drums", unit: "taps", gauge: "pump",
+    desc: "Invisible · fast alternating heel raises, toes planted", baseRpm: 120, hrFactor: 0.6,
+    blurb: "A sprint you can do sitting down: drum your heels as fast as you can, toes planted so it stays silent. Big leg muscles firing rhythmically lift your heart rate and start burning the circulating adrenaline that's making you feel wired." },
+  { id: "calfpump", set: "desk", name: "Tall-spine calf pump", unit: "reps", gauge: "pump",
+    desc: "Invisible · sit tall, heels up slow, toes planted", baseRpm: 35, hrFactor: 0.4,
+    blurb: "Sit up tall and pump slow heel raises — toes planted, heels as high as they'll go. The soleus is nicknamed the 'second heart': every raise pushes pooled blood back into circulation and breaks the metabolic stillness of sitting, while the upright posture nudges arousal gently upward. Activation with zero dread factor." },
+  { id: "rolls", set: "desk", name: "Slow shoulder rolls", unit: "rolls", gauge: "release",
+    desc: "Subtle · roll back and drop, shoulders away from ears", baseRpm: 10, hrFactor: 0.35,
+    blurb: "Tension lives in the shoulders, neck and jaw — the exact muscles that brace when you're on edge. Slow, deliberate rolls move them through their full range, and each cycle ends with a drop: shoulders away from ears. It looks like a normal desk stretch because it is one." },
+  /* ---- desk alternates (Explore + "choose a different one") ---- */
+  { id: "legext", set: "desk", name: "Hidden leg extensions", unit: "extensions", gauge: "focus",
+    desc: "Invisible · straighten, squeeze 10s, lower slow", baseRpm: 5, hrFactor: 0.5,
+    blurb: "Straighten one leg under the desk until it's parallel to the floor, squeeze the thigh hard, then lower it slowly without touching down — and switch. The long squeeze works your biggest muscle group while counting slow extensions keeps working memory occupied." },
+  { id: "ankles", set: "desk", name: "Under-desk ankle circles", unit: "circles", gauge: "pump",
+    desc: "Invisible · feet up, slow smooth circles", baseRpm: 20, hrFactor: 0.3,
+    blurb: "Lift your feet just off the floor and trace slow, smooth circles from the ankles. It flushes pooled blood through the lower legs and gives restless lower-body energy somewhere quiet to go." },
+  { id: "pinch", set: "desk", name: "Shoulder-blade pinches", unit: "pinches", gauge: "release",
+    desc: "Invisible · blades back and down, hold, release", baseRpm: 6, hrFactor: 0.3,
+    blurb: "Pull your shoulder blades back and down — away from your ears — squeeze firmly with your arms relaxed, then release. It's the exact opposite of screen-hunch posture, unwinding the muscles that brace when you're tense." },
+  /* ---- signature · open (room to move) ---- */
+  { id: "jacks", set: "open", name: "Jumping jacks", unit: "reps", gauge: "hr",
+    desc: "Vigorous · the one you already know", baseRpm: 55, hrFactor: 0.8,
+    blurb: "The most familiar vigorous move there is — zero learning curve, full-body, quick to drive heart rate up. Your muscles start metabolising the circulating adrenaline that's making you feel wired, and the whole-body rhythm gives the buzz somewhere to go." },
+  { id: "fold", set: "open", name: "Rag-doll folds", unit: "folds", gauge: "release",
+    desc: "Gentle · roll down slow, hang heavy, roll up", baseRpm: 6, hrFactor: 0.4,
+    blurb: "Soft knees, chin down, and roll forward one vertebra at a time until you're hanging like a rag-doll — then roll back up just as slowly. Gravity tractions out the neck, shoulder and back tension you've been holding, and the slow roll up teaches those muscles where 'released' is." },
+  /* ---- classics ---- */
+  { id: "march", set: "open", name: "March in place", unit: "reps", gauge: "hr",
+    desc: "Gentle · knees to hip height", baseRpm: 60, hrFactor: 0.45,
+    blurb: "Gentle, rhythmic, bilateral movement is self-regulating on its own — a structured version of the pacing people instinctively do when stressed. It lifts your heart rate just enough to start clearing circulating adrenaline without overwhelming you." },
+  { id: "squat", set: "open", name: "Counted air squats", unit: "reps", gauge: "focus",
+    desc: "Moderate · slow, thighs to parallel, count each rep", baseRpm: 30, hrFactor: 0.65,
+    blurb: "The move everyone knows, done slow with an exact count. Squats recruit your largest muscles — enough systemic demand to lift heart rate and sharpen focus via norepinephrine — while counting each rep occupies the working memory the anxious loop runs on. Two mechanisms, one familiar movement." },
+  { id: "knees", set: "open", name: "High knees", unit: "reps", gauge: "hr",
+    desc: "Intense · fast, knees above hips", baseRpm: 80, hrFactor: 0.84,
+    blurb: "The most vigorous classic. Driving a racing heart in a safe, time-boxed way retrains your brain to read that feeling as effort rather than danger — and vigorous bursts are the fastest way to metabolise circulating adrenaline." },
+];
+const CLASSIC_IDS = ["knees"];
+function exById(id) { return EXERCISES.find(e => e.id === id); }
+function tiersFor(ctxId) {
+  return EXERCISES.filter(e => e.set === ctxById(ctxId).set)
+                  .slice().sort((a, b) => a.hrFactor - b.hrFactor);
+}
+
+/* Milestone scripts: {t, vid} — text lives in VOICE_LINES. */
+const MILESTONE_SETS = {
+  heelpat:    [0, 10, 22, 34, 46, 56].map(t => ({ t, vid: "ms_heelpat_" + t })),
+  squat:      [0, 10, 22, 34, 46, 56].map(t => ({ t, vid: "ms_sqcount_" + t })),
+  /* counting is the mindfulness anchor — the recorded "count every one" line
+     is scheduled into effort moves that don't say it themselves */
+  drums:      [{ t: 6, vid: "ms_gen_0" }, ...[0, 10, 22, 34, 46, 56].map(t => ({ t, vid: "ms_drums_" + t }))].sort((a, b) => a.t - b.t),
+  jacks:      [{ t: 6, vid: "ms_gen_0" }, ...[0, 10, 22, 34, 46, 56].map(t => ({ t, vid: "ms_jacks_" + t }))].sort((a, b) => a.t - b.t),
+  /* form cues first, mechanism mid, finish last — the breathing instruction
+     plays at 10s (vids keep their original recording ids) */
+  calfpump: [
+    { t: 0,  vid: "ms_calfpump_0" },   // sit tall, slow heel raises
+    { t: 10, vid: "ms_calfpump_22" },  // inhale as you rise, exhale as you lower
+    { t: 22, vid: "ms_calfpump_10" },  // second-heart mechanism
+    { t: 34, vid: "ms_calfpump_34" },
+    { t: 46, vid: "ms_calfpump_46" },
+    { t: 56, vid: "ms_calfpump_56" },
+  ],
+  march:      [{ t: 6, vid: "ms_gen_0" }, ...[0, 10, 22, 34, 46, 56].map(t => ({ t, vid: "ms_march_" + t }))].sort((a, b) => a.t - b.t),
+  rolls:      [0, 10, 22, 34, 46, 56].map(t => ({ t, vid: "ms_rolls_" + t })),
+  legext:     [0, 10, 22, 34, 46, 56].map(t => ({ t, vid: "ms_legext_" + t })),
+  ankles:     [0, 10, 22, 34, 46, 56].map(t => ({ t, vid: "ms_ankles_" + t })),
+  pinch:      [0, 10, 22, 34, 46, 56].map(t => ({ t, vid: "ms_pinch_" + t })),
+  fold:       [0, 10, 22, 34, 46, 56].map(t => ({ t, vid: "ms_fold_" + t })),
+  generic:    [0, 8, 18, 28, 40, 50, 56].map(t => ({ t, vid: "ms_gen_" + t })),
+};
+function milestonesFor(ex) { return MILESTONE_SETS[ex.id] || MILESTONE_SETS.generic; }
+
+/* Moods. Each declares its signature move per context — mechanism-matched,
+   so the reasoning on the Rx screen and the timer narration are honest. */
+const STATES = [
+  { id: "racing", label: "Overthinking", desc: "looping thoughts, can't stop the mental chatter",
+    color: "#F47D31", ink: "#fff", accent: "#F47D31", blob: 0,
+    sig: { desk: "heelpat", open: "squat" },
+    head: "Let's give your mind one job.",
+    rationale: "Rumination runs on working-memory bandwidth — the same bandwidth that keeping an exact count demands. Occupy it and the loop has nowhere to run. This is attentional anchoring, not distraction.",
+    rec: "a steady, familiar movement with an exact count — the loop can't compete with counting." },
+  { id: "wired", label: "Wired", desc: "restless, jittery, buzzing with too much energy",
+    color: "#5479F7", ink: "#fff", accent: "#5479F7", blob: 1,
+    sig: { desk: "drums", open: "jacks" },
+    head: "You've got fuel to burn. Let's burn it.",
+    rationale: "Jittery, buzzing energy is circulating adrenaline with nowhere to go. Hard effort gives it a destination — your muscles metabolise the catecholamines instead of letting them sit and simmer. Even seated, sprint-fast heel drums give it somewhere to go.",
+    rec: "a hard, fast burst — visible or under the desk — that actually spends the energy." },
+  { id: "low", label: "Low", desc: "down, heavy, foggy, unmotivated",
+    color: "#FCCF55", ink: "#4a3b10", accent: "#D79B12", blob: 2,
+    sig: { desk: "calfpump", open: "march" },
+    head: "We're not chasing calm. We're chasing a spark.",
+    rationale: "Flat, heavy mood responds to activation more than to rest. Gentle rhythmic movement lifts arousal without demanding motivation you don't have — the entry ramp matters more than the intensity.",
+    rec: "gentle activation with zero dread factor — an easy rhythm you already know." },
+  { id: "tense", label: "Tense", desc: "stressed, braced, shoulders up, can't settle",
+    color: "#3DA48E", ink: "#fff", accent: "#2E8B72", blob: 0,
+    sig: { desk: "rolls", open: "fold" },
+    head: "Release it, muscle by muscle.",
+    rationale: "Being braced and on-edge is tension you're physically holding — most of it in the shoulders, neck and jaw. Slow, deliberate movement through those exact muscles (or literal shaking) discharges it, and the drop at the end of each roll teaches your body where 'released' is.",
+    rec: "moving the exact muscles doing the bracing — roll them, drop them, feel the difference." },
+  { id: "winddown", label: "Sleepless", desc: "can't sleep, need to settle for the night", mode: "calm",
+    color: "#586BE0", ink: "#fff", accent: "#586BE0", blob: 1,
+    sig: null,
+    head: "Let's downshift, not rev up.",
+    rationale: "Near bedtime the usual logic flips. Raising your heart rate now — higher core temperature, more adrenaline — is exactly what keeps you awake. The move is the opposite: a slow breath with a long exhale switches on the parasympathetic 'rest' branch and lets your heart rate fall.",
+    rec: "a slow breath with an extended exhale settles the nervous system faster than anything with reps." },
+];
+
+/* Calm-mode protocols — invisible by design, work in any context. */
+const CALM_PROTOCOLS = [
+  { id: "478", name: "4-7-8 breath", desc: "Inhale 4 · hold 7 · exhale 8", loop: true,
+    blurb: "The long, controlled exhale is the active ingredient: stretching your out-breath well past your in-breath tips the nervous system toward its 'rest' branch, slowing heart rate and easing the body toward sleep. Popularised by Dr. Andrew Weil.",
+    steps: [ { vid: "br_in", dur: 4, orb: "in" }, { vid: "br_hold", dur: 7, orb: "hold" }, { vid: "br_out", dur: 8, orb: "out" } ] },
+  { id: "sigh", name: "Physiological sigh", desc: "Double inhale · long exhale", loop: true,
+    blurb: "Two stacked inhales then a slow, complete exhale reinflates collapsed air sacs and offloads CO₂ efficiently — among the fastest breathing patterns for dropping acute stress, per Stanford research. Good when the mind is still busy. Completely invisible at a desk.",
+    steps: [ { vid: "br_nose", dur: 2, orb: "in" }, { vid: "br_in2", dur: 1, orb: "in2" }, { vid: "br_long", dur: 6, orb: "out", cueLate: 0.7 } ] },
+  { id: "stretch", name: "Tension-release", desc: "Gentle holds, head to shoulders", loop: false,
+    blurb: "Slow, gentle stretches release the physical bracing that keeps a tense body awake. Nothing to strain — just easing held tension out of the neck, shoulders and back so the body can follow the mind toward rest.",
+    steps: [
+      { vid: "st_shoulders", dur: 12, orb: "hold" },
+      { vid: "st_right", dur: 12, orb: "hold" },
+      { vid: "st_left", dur: 12, orb: "hold" },
+      { vid: "st_reach", dur: 12, orb: "hold" },
+      { vid: "st_hug", dur: 12, orb: "hold" },
+    ] },
+];
+
+/* Your day — daily timeline. Each item shortcuts to a mood. */
+const TIMELINE = [
+  { id: "am",  from: 5,  to: 12, title: "Morning · Wake the system",  sub: "A spark to start, not a workout", stateId: "low" },
+  { id: "mid", from: 12, to: 18, title: "Midday · Reset the tension", sub: "Discharge the buildup, muscle by muscle", stateId: "tense" },
+  { id: "pm",  from: 18, to: 29, title: "Evening · Wind down",        sub: "Downshift — long exhales, no reps", stateId: "winddown" },
+];
+
+const ACTIVITY_MULT = [0.75, 0.9, 1.0, 1.15];   // sedentary..active
+const STORE_KEY = "snackrx_v4";
+
+/* ================= STATE ================= */
+
+let S = load() || {
+  profile: null,          // {age, rhr, activity} — null = estimated from DEFAULT_PROFILE
+  context: null,          // null = default to "public" (invisible moves work anywhere)
+  calibration: 1.0,       // global effort multiplier
+  sessions: [],
+  voice: true,
+};
+if (S.voice === undefined) S.voice = true;
+
+/* Full Tesla: nothing is asked upfront. We estimate from a typical baseline
+   and let the RPE/completion feedback loop correct the dose — the user can
+   tune the real numbers in one tap from the Rx screen whenever they want. */
+const DEFAULT_PROFILE = { age: 35, rhr: 70, activity: 1 };
+function prof() { return S.profile || DEFAULT_PROFILE; }
+
+let current = {};         // per-session scratch
+let timerInt = null;
+let activeTab = "today";
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)); } catch (e) { return null; }
+}
+function save() { localStorage.setItem(STORE_KEY, JSON.stringify(S)); }
+
+/* ================= VOICE GUIDE =================
+   Playback order: voice/<id>.mp3 (pre-recorded pack, e.g. HeyGen) →
+   best available device voice via speechSynthesis. */
+
+const canSpeak = ("speechSynthesis" in window);
+let voiceList = [];
+function loadVoices() { if (canSpeak) voiceList = window.speechSynthesis.getVoices(); }
+if (canSpeak) { loadVoices(); window.speechSynthesis.onvoiceschanged = loadVoices; }
+
+/* Prefer premium / neural / enhanced voices — dramatically more human on
+   modern devices — then fall back through known-good names. */
+function pickVoice() {
+  const en = voiceList.filter(v => /^en(-|_|$)/i.test(v.lang));
+  const pool = en.length ? en : voiceList;
+  const tiers = [
+    /premium|enhanced|natural|neural/i,
+    /Samantha|Ava|Zoe|Allison|Karen|Serena|Moira|Fiona/i,
+    /Google US English|Google UK English Female/i,
+  ];
+  for (const t of tiers) { const v = pool.find(v => t.test(v.name)); if (v) return v; }
+  return pool[0];
+}
+
+const packSrc = {};       // vid -> "webm" | "mp3" | "tts" (resolved per line, cached)
+let currentAudio = null;
+
+function ttsSpeak(text, opts) {
+  opts = opts || {};
+  if (!canSpeak || !text) return;
+  if (opts.interrupt !== false) window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  const v = pickVoice();
+  if (v) { u.voice = v; u.lang = v.lang; }
+  u.rate = opts.rate || 0.87;    // slow = calm
+  u.pitch = opts.pitch || 0.97;  // a touch low = warm
+  window.speechSynthesis.speak(u);
+}
+
+/* Speak a registered line by id.
+   Priority: your own recordings (voice/<id>.webm from the recorder page) →
+   generated pack (voice/<id>.mp3, e.g. HeyGen) → device TTS. */
+function speakLine(vid, opts) {
+  if (S.voice === false) return;
+  const text = line(vid);
+  if (!text) return;
+  stopSpeaking();
+  // embedded voice pack plays first — through the media channel (see audio pool)
+  if (window.VOICE_DATA && window.VOICE_DATA[vid]) {
+    poolPlay(window.VOICE_DATA[vid], null, () => ttsSpeak(text, opts));
+    return;
+  }
+  if (packSrc[vid] === "tts") { ttsSpeak(text, opts); return; }
+  const tryExts = (exts) => {
+    if (!exts.length) { packSrc[vid] = "tts"; ttsSpeak(text, opts); return; }
+    const a = new Audio("voice/" + vid + "." + exts[0]);
+    let failed = false;
+    const fail = () => { if (failed) return; failed = true; tryExts(exts.slice(1)); };
+    a.onerror = fail;
+    currentAudio = a;
+    a.play().then(() => { packSrc[vid] = exts[0]; }).catch(fail);
+  };
+  tryExts(packSrc[vid] ? [packSrc[vid]] : ["m4a", "wav", "webm", "mp3"]);
+}
+let cueLateT = null;   // a breathing cue scheduled to start late (see applyStep)
+function stopSpeaking() {
+  if (canSpeak) window.speechSynthesis.cancel();
+  if (currentAudio) { currentAudio.onended = null; currentAudio.pause(); currentAudio = null; }
+  clearTimeout(cueLateT);
+  seqToken++;   // cancels any in-flight sequence
+}
+
+/* ---- Media-channel audio pool ----
+   HTMLAudio elements play on the *media* channel, which iPhones do NOT mute
+   with the silent switch (this is how Headspace and Spotify are always heard;
+   Web Audio, by contrast, goes silent). The pool is unlocked by the first tap
+   anywhere, so clips can then start any time — even mid-timer. */
+const SILENT_WAV = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=";
+const audioPool = [];
+let poolIdx = 0, poolReady = false;
+function unlockAudio() {
+  if (poolReady) return;
+  poolReady = true;
+  for (let i = 0; i < 3; i++) {
+    const a = new Audio(SILENT_WAV);
+    const p = a.play(); if (p && p.catch) p.catch(() => {});
+    audioPool.push(a);
+  }
+}
+document.addEventListener("pointerdown", unlockAudio, { capture: true, passive: true });
+function poolPlay(src, onended, onerror) {
+  const a = audioPool.length ? audioPool[poolIdx++ % audioPool.length] : new Audio();
+  a.onended = onended || null;
+  a.onerror = onerror ? () => onerror() : null;
+  a.src = src;
+  currentAudio = a;
+  const p = a.play();
+  if (p && p.catch) p.catch(() => { if (onerror) onerror(); });
+  return a;
+}
+
+/* ---- sequenced playback: recorded clips back-to-back ---- */
+let seqToken = 0;
+/* The dose grid: prescriptions, steppers and spoken targets all live on
+   these values, so the voice always says exactly what the screen shows. */
+const TP_GRID = [4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 25, 30, 35, 40, 45,
+  50, 60, 70, 80, 90, 100, 120, 150, 200, 250, 300];
+function snapGrid(r) {
+  return TP_GRID.reduce((b, v) => Math.abs(v - r) < Math.abs(b - r) ? v : b, TP_GRID[0]);
+}
+/* Combined target phrases ("58 reps" as ONE recording — no stitching).
+   Each unit only ever needs a slice of the grid; the stepper is clamped to
+   the same slice, so the voice is never asked for a number that wasn't recorded. */
+const UNIT_GRID = { circles: [8, 60], cycles: [4, 35], extensions: [4, 12], folds: [4, 16],
+  pinches: [4, 16], reps: [9, 200], rolls: [4, 30], taps: [40, 300] };
+Object.keys(UNIT_GRID).forEach(u => {
+  TP_GRID.filter(v => v >= UNIT_GRID[u][0] && v <= UNIT_GRID[u][1])
+         .forEach(v => { VOICE_LINES["tgt_" + v + "_" + u] = v + " " + u; });
+});
+/* Per-exercise stepper window: the grid slice its doses can actually reach. */
+function gridWindow(ex) {
+  const ia = 1 + (0.675 - ex.hrFactor) * 0.5;
+  const lo = snapGrid(Math.max(4, Math.round(ex.baseRpm * 0.375 * ia)));
+  const hi = snapGrid(Math.round(ex.baseRpm * 2.07 * ia));
+  return [Math.max(0, TP_GRID.indexOf(lo) - 1), Math.min(TP_GRID.length - 1, TP_GRID.indexOf(hi) + 1)];
+}
+function targetVids(n, ex) {
+  const g = TP_GRID.includes(n) ? n : snapGrid(n);
+  const combo = "tgt_" + g + "_" + ex.unit;
+  // one seamless phrase when the recording exists; stitched number+unit otherwise
+  const spoken = (!window.VOICE_DATA || window.VOICE_DATA[combo]) ? [combo] : ["tp_" + g, "unit_" + ex.unit];
+  return [...spoken, ...(ex.gauge !== "release" ? ["tgt_count"] : [])];
+}
+function playOne(vid, onDone) {
+  const text = line(vid);
+  const ttsThen = () => { ttsSpeak(text, { interrupt: false }); if (onDone) setTimeout(onDone, Math.max(700, text.length * 65)); };
+  if (window.VOICE_DATA && window.VOICE_DATA[vid]) {
+    poolPlay(window.VOICE_DATA[vid], onDone, ttsThen);
+    return;
+  }
+  if (packSrc[vid] === "tts") { ttsThen(); return; }
+  const tryE = (list) => {
+    if (!list.length) { packSrc[vid] = "tts"; ttsThen(); return; }
+    let failed = false;
+    const fail = () => { if (failed) return; failed = true; tryE(list.slice(1)); };
+    const a = poolPlay("voice/" + vid + "." + list[0], onDone, fail);
+    a.onplaying = () => { packSrc[vid] = list[0]; };
+  };
+  tryE(packSrc[vid] ? [packSrc[vid]] : ["m4a", "wav", "webm", "mp3"]);
+}
+async function playSeq(vids) {
+  if (S.voice === false || !vids.length) return;
+  stopSpeaking();
+  const token = seqToken;
+  let i = 0;
+  const next = () => { if (token === seqToken && i < vids.length) playOne(vids[i++], next); };
+  next();
+}
+/* Debounced target announcement (steppers can be tapped rapidly). */
+let annT = null;
+function announceTarget(withCount) {
+  clearTimeout(annT);
+  annT = setTimeout(() => {
+    if (current.calm || !current.target) return;
+    playSeq(targetVids(current.target, current.ex).filter(v => v !== "tgt_count"));
+  }, 650);
+}
+
+/* First-meeting moment: the guide voice is the product — make sure people
+   notice it exists. Shown once, at the first prescription. */
+function soundIntroToast() {
+  if (S.voice === false || S.soundIntro) return;
+  S.soundIntro = true; save();
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.textContent = "🔊 Sound on — I'll talk you through it";
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3600);
+}
+
+function renderVoiceBtn() {
+  const on = S.voice !== false;
+  const btn = document.getElementById("voiceToggle");
+  btn.classList.toggle("off", !on);
+  btn.innerHTML = on
+    ? "<svg width='20' height='20' viewBox='0 0 24 24' fill='none'><path d='M4 9v6h4l5 4V5L8 9H4z' fill='currentColor'/><path d='M15.5 8.5a4 4 0 010 7' stroke='currentColor' stroke-width='2' stroke-linecap='round'/><path d='M18 6a7 7 0 010 12' stroke='currentColor' stroke-width='2' stroke-linecap='round'/></svg>"
+    : "<svg width='20' height='20' viewBox='0 0 24 24' fill='none'><path d='M4 9v6h4l5 4V5L8 9H4z' fill='currentColor'/><path d='M16 9l5 6M21 9l-5 6' stroke='currentColor' stroke-width='2' stroke-linecap='round'/></svg>";
+}
+
+/* ================= MATH ================= */
+
+function karvonenZone(age, rhr) {
+  const hrMax = 220 - age;
+  const hrr = hrMax - rhr;
+  return { lo: Math.round(rhr + 0.60 * hrr), hi: Math.round(rhr + 0.75 * hrr) };
+}
+
+function prescribeReps(ex, profile, calibration) {
+  const mult = ACTIVITY_MULT[profile.activity] * calibration;
+  const intensityAdj = 1 + (0.675 - ex.hrFactor) * 0.5;
+  const reps = Math.max(4, Math.round(ex.baseRpm * mult * intensityAdj));
+  // snap to the dose grid so the spoken target matches the screen exactly
+  return TP_GRID.reduce((b, v) => Math.abs(v - reps) < Math.abs(b - reps) ? v : b, TP_GRID[0]);
+}
+
+/* Recalibrate from RPE + completion. Target RPE band: 5–7. */
+/* Human name for the calibration factor: "Standard", "+5%", "-10%" */
+function calLabel() {
+  const pct = Math.round((S.calibration - 1) * 100);
+  if (pct > 0) return "+" + pct + "%";   // earned it: show the number proudly
+  if (pct < 0) return "Gentle";          // never a minus sign: eased is a feature, not a grade
+  return "Standard";
+}
+function recalibrate(cal, rpe, done, target) {
+  const completion = target > 0 ? done / target : 1;
+  let next = cal, why = [];
+  if (completion < 0.8) {
+    next *= 0.9; why.push("under 80% of target → dose −10%");
+  } else if (rpe >= 9) {
+    next *= 0.88; why.push("RPE " + rpe + "/10 (near-maximal) → dose −12%");
+  } else if (rpe >= 8) {
+    next *= 0.95; why.push("RPE " + rpe + "/10 (very hard) → dose −5%");
+  } else if (rpe <= 3) {
+    next *= 1.12; why.push("RPE " + rpe + "/10 (too easy) → dose +12%");
+  } else if (rpe <= 4) {
+    next *= 1.06; why.push("RPE " + rpe + "/10 (easy) → dose +6%");
+  } else {
+    why.push("RPE " + rpe + "/10 is in the 5–7 target band → dose held");
+  }
+  if (completion > 1.15 && rpe <= 7) {
+    next *= 1.04; why.push("beat target by " + Math.round((completion - 1) * 100) + "% → +4%");
+  }
+  next = Math.min(1.8, Math.max(0.5, next));
+  return { next: Math.round(next * 100) / 100, why };
+}
+
+/* ================= BADGES =================
+   All earned from S.sessions — nothing stored but the "already celebrated"
+   list, so badges survive as long as the visitor's browser data does. */
+const BADGES = [
+  { id: "first",    icon: "🌱", name: "First snack",     desc: "You showed up once — that's the hard one",
+    test: t => t.total >= 1 },
+  { id: "five",     icon: "✋", name: "5 snacks",         desc: "Five minutes reclaimed from the spiral",
+    test: t => t.total >= 5 },
+  { id: "twentyfive", icon: "🏅", name: "25 snacks",      desc: "This is a real practice now",
+    test: t => t.total >= 25 },
+  { id: "streak3",  icon: "🔥", name: "3-day streak",    desc: "Three days in a row",
+    test: t => t.streak >= 3 },
+  { id: "streak7",  icon: "⚡", name: "7-day streak",    desc: "A full week, every single day",
+    test: t => t.streak >= 7 },
+  { id: "moods",    icon: "🎭", name: "All four moods",  desc: "Racing, wired, low and tense — all met with movement",
+    test: t => t.states >= 4 },
+  { id: "ninja",    icon: "🥷", name: "Invisible expert", desc: "Three different under-the-desk moves",
+    test: t => t.deskMoves >= 3 },
+  { id: "winddown", icon: "🌙", name: "Wind-down",       desc: "First breathing session done",
+    test: t => t.calms >= 1 },
+  { id: "bigdrop",  icon: "📉", name: "Big drop",        desc: "Settled 3+ points in one minute",
+    test: t => t.bigDrop },
+];
+function badgeStats() {
+  const ss = S.sessions;
+  return {
+    total: ss.length,
+    streak: streakDays(),
+    states: new Set(ss.filter(s => !s.calm && s.state && s.state !== "winddown").map(s => s.state)).size,
+    deskMoves: new Set(ss.map(s => s.ex).filter(id => { const e = id && exById(id); return e && e.set === "desk"; })).size,
+    calms: ss.filter(s => s.calm).length,
+    bigDrop: ss.some(s => (s.pre - s.post) >= 3),
+  };
+}
+function earnedBadges() { const t = badgeStats(); return BADGES.filter(b => b.test(t)).map(b => b.id); }
+/* Confetti for badge unlocks: two side cannons in the app's palette.
+   Pure canvas, no library, removes itself. Skipped for reduced-motion users. */
+function confettiBurst() {
+  if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const cv = document.createElement("canvas");
+  cv.style.cssText = "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:200";
+  document.body.appendChild(cv);
+  const ctx = cv.getContext("2d");
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; ctx.scale(dpr, dpr);
+  const COLORS = ["#F47D31", "#F0C75E", "#6C7FD8", "#7FB4D6", "#8FCC7E", "#E8DFD0"];
+  const parts = [];
+  for (let i = 0; i < 130; i++) {
+    const fromLeft = i % 2 === 0;
+    parts.push({
+      x: fromLeft ? -12 : innerWidth + 12,
+      y: innerHeight * (0.22 + Math.random() * 0.3),
+      vx: (fromLeft ? 1 : -1) * (3 + Math.random() * 5.5),
+      vy: -(4 + Math.random() * 5),
+      w: 5 + Math.random() * 5, h: 3 + Math.random() * 4,
+      rot: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.3,
+      color: COLORS[i % COLORS.length],
+    });
+  }
+  let frames = 0;
+  (function step() {
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    parts.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.18; p.vx *= 0.99; p.rot += p.vr;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0, 1 - frames / 150);
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+    });
+    if (++frames < 165) requestAnimationFrame(step);
+    else cv.remove();
+  })();
+}
+
+function renderBadges() {
+  const t = badgeStats();
+  $("badges").innerHTML = BADGES.map(b => {
+    const on = b.test(t);
+    return "<div class='badge" + (on ? "" : " locked") + "'><div class='bi'>" + b.icon +
+      "</div><div class='bn'>" + b.name + "</div><div class='bd'>" + b.desc + "</div></div>";
+  }).join("");
+}
+
+function streakDays() {
+  const days = new Set(S.sessions.map(s => new Date(s.date).toDateString()));
+  let n = 0;
+  const d = new Date();
+  while (days.has(d.toDateString())) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+
+/* ================= UI HELPERS ================= */
+
+const $ = id => document.getElementById(id);
+
+let flowPushed = false;
+/* Funnel beacons (2026-07-20, Jonny's call — the You-tab disclosure widened to match):
+   each says a STEP happened, never what it contained — no moods, ratings, doses,
+   results or streaks. fbq only exists on the live hostnames, so local copies no-op. */
+function beacon(step) { if (window.fbq) fbq("trackCustom", step); }
+let wlBeaconAt = 0;
+function beaconWaitlistSeen() {
+  const now = Date.now();
+  if (now - wlBeaconAt < 5000) return;   // results card + its auto-popup count as ONE ask
+  wlBeaconAt = now;
+  beacon("WaitlistViewed");
+}
+function show(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  $(id).classList.add("active");
+  if (id === "scr-rx") beacon("RxViewed");
+  const flow = id.indexOf("scr-") === 0;
+  // the phone's back button should leave the flow, not the site: entering the
+  // flow adds ONE history entry; popstate (below) unwinds it like the in-app back
+  if (flow && !document.body.classList.contains("flow")) {
+    try { history.pushState({ settle: 1 }, ""); flowPushed = true; } catch (e) {}
+  }
+  document.body.classList.toggle("flow", flow);
+  // pill shows everywhere except mid-snack and the log/results (the popup owns those)
+  document.body.classList.toggle("fab-off", flow && id !== "scr-rx");
+  window.scrollTo(0, 0);
+}
+/* In-app exits go through here so history stays in sync with the screen */
+function exitFlow() {
+  if (flowPushed) history.back();
+  else showTab(activeTab);
+}
+window.addEventListener("popstate", () => {
+  flowPushed = false;
+  if (document.body.classList.contains("flow")) {
+    if (timerInt) { clearInterval(timerInt); timerInt = null; }
+    releaseWakeLock();
+    stopSpeaking();
+    showTab(activeTab);
+  }
+});
+function showTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll("#nav button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+  if (tab === "today") renderToday();
+  if (tab === "explore") renderExplore();
+  if (tab === "you") renderYou();
+  show("tab-" + tab);
+}
+document.querySelectorAll("#nav button").forEach(b => b.onclick = () => showTab(b.dataset.tab));
+
+function segInit(segId) {
+  const seg = $(segId);
+  seg.querySelectorAll("button").forEach(b => b.onclick = () => {
+    seg.querySelectorAll("button").forEach(x => x.classList.remove("sel"));
+    b.classList.add("sel");
+  });
+}
+function segVal(segId) { return $(segId).querySelector(".sel").dataset.v; }
+function segSet(segId, v) {
+  $(segId).querySelectorAll("button").forEach(b => b.classList.toggle("sel", b.dataset.v === String(v)));
+}
+function bindSlider(inputId, valId) {
+  $(inputId).oninput = () => { $(valId).textContent = $(inputId).value; };
+}
+function renderStreakChip() {
+  const n = streakDays();
+  const chip = $("streakChip");
+  chip.style.display = n > 0 ? "inline-block" : "none";
+  chip.textContent = n + "-day streak";
+}
+
+/* Headspace-style blob characters — organic shapes with a closed-eye smile. */
+const BLOB_PATHS = [
+  "M38 5c13 0 26 6 30 18 4 13-1 27-10 34-10 8-27 9-38 2C9 52 3 39 8 26 13 12 25 5 38 5z",
+  "M40 6c12 2 23 9 26 21 3 11-2 23-11 30-10 8-25 9-35 3C9 53 3 41 7 28 11 14 27 4 40 6z",
+  "M36 6c14-2 28 6 32 19 3 12-4 24-14 31-9 6-23 6-32-1C11 47 6 34 10 22 14 11 24 8 36 6z",
+];
+function blobSVG(variant) {
+  const p = BLOB_PATHS[(variant || 0) % BLOB_PATHS.length];
+  return "<svg viewBox='0 0 76 76' fill='none' xmlns='http://www.w3.org/2000/svg'>" +
+    "<path d='" + p + "' fill='#ffffff' fill-opacity='0.92'/>" +
+    "<path d='M26 35 q4.5 -6 9 0' stroke='#2D2A26' stroke-opacity='0.55' stroke-width='3' stroke-linecap='round'/>" +
+    "<path d='M42 35 q4.5 -6 9 0' stroke='#2D2A26' stroke-opacity='0.55' stroke-width='3' stroke-linecap='round'/>" +
+    "<path d='M30 46 q8 8 16 0' stroke='#2D2A26' stroke-opacity='0.55' stroke-width='3' stroke-linecap='round'/>" +
+    "</svg>";
+}
+
+/* ---- animated demo figures (pure SVG + CSS, no assets) ---- */
+const FIGS = {
+  heelpat:  { rig: "seat",  anim: "heelpat", d: 5 },
+  drums:    { rig: "seat",  anim: "drums",   d: 1, beats: 2 },
+  calfpump: { rig: "seat",  anim: "calf",    d: 1.8 },
+  rolls:    { rig: "back",  anim: "rolls2",  d: 6 },
+  legext:   { rig: "seat",  anim: "legext",  d: 12 },
+  ankles:   { rig: "seat",  anim: "ankles",  d: 3 },
+  pinch:    { rig: "back",  anim: "pinch2",  d: 8 },
+  squat:    { rig: "side",  anim: "squat2",  d: 2.2 },
+  jacks:    { rig: "stand", anim: "jacks",   d: 1.1 },
+  fold:     { rig: "side",  anim: "fold",    d: 10 },
+  march:    { rig: "side",  anim: "march2",  d: 1.1, beats: 2 },
+  knees:    { rig: "side",  anim: "knees2",  d: 0.75, beats: 2 },
+};
+function figureHTML(ex, dur) {
+  const f = FIGS[ex.id];
+  if (!f) return "";
+  // beats = movements per animation cycle (e.g. march cycle = 2 steps)
+  const d = (dur ? dur * (f.beats || 1) : f.d) + "s";
+  const stand =
+    "<ellipse class='f-shadow' cx='60' cy='130' rx='24' ry='3.5'/>" +
+    "<g class='f-legL'><path d='M60 84 L50 124'/></g>" +
+    "<g class='f-legR'><path d='M60 84 L70 124'/></g>" +
+    "<g class='f-upper'>" +
+      "<path class='f-torsoP' d='M60 46 L60 78'/>" +
+      "<circle class='f-head' cx='60' cy='26' r='13'/>" +
+      "<g class='f-face'><path d='M51 24 q3 -3.5 6 0'/><path d='M63 24 q3 -3.5 6 0'/><path d='M55 31 q5 4.5 10 0'/></g>" +
+      "<g class='f-armL'><path d='M60 50 L52 78'/></g>" +
+      "<g class='f-armR'><path d='M60 50 L68 78'/></g>" +
+    "</g>";
+  const side =
+    "<ellipse class='f-shadow' cx='62' cy='130' rx='22' ry='3.5'/>" +
+    "<g class='f-hipY'>" +
+      "<g class='f-farw'><g class='f-thighF'><path d='M60 84 L60 104'/>" +
+        "<g class='f-shinF'><path d='M60 104 L60 124'/><g class='f-footF'><path d='M60 124 L73 124'/></g></g></g></g>" +
+      "<g class='f-thighN'><path d='M60 84 L60 104'/>" +
+        "<g class='f-shinN'><path d='M60 104 L60 124'/><g class='f-footN'><path d='M60 124 L73 124'/></g></g></g>" +
+      "<g class='f-torso2'>" +
+        "<path class='f-torsoP' d='M60 80 L58 52'/>" +
+        "<circle class='f-head' cx='61' cy='33' r='12.5'/>" +
+        "<g class='f-face'><path d='M64 30 q3 -3.5 6 0'/><path d='M64 37.5 q3.5 3 7 0'/></g>" +
+        "<g class='f-arm2'><path d='M58 52 L57 78'/></g>" +
+      "</g>" +
+    "</g>";
+  const back =
+    "<ellipse class='f-shadow' cx='60' cy='133' rx='30' ry='3.5'/>" +
+    "<path class='f-chair' d='M36 96 L84 96 M42 96 L42 128 M78 96 L78 128'/>" +
+    "<path d='M53 97 L51 127'/><path d='M67 97 L69 127'/>" +
+    "<path class='f-torsoP' d='M60 50 L60 88'/>" +
+    "<circle class='f-head' cx='60' cy='27' r='12.5'/>" +
+    "<g class='f-armBL'><path d='M53 52 L40 76'/></g>" +
+    "<g class='f-armBR'><path d='M67 52 L80 76'/></g>" +
+    "<g class='f-bladeL'><path class='f-blade' d='M52 56 L50 68'/></g>" +
+    "<g class='f-bladeR'><path class='f-blade' d='M68 56 L70 68'/></g>";
+  const seat =
+    "<ellipse class='f-shadow' cx='70' cy='133' rx='34' ry='3.5'/>" +
+    "<circle class='f-cpulse' cx='90' cy='112' r='9'/>" +
+    "<circle class='f-arc' cx='42' cy='54' r='11'/>" +
+    "<path class='f-chair' d='M38 94 L86 94 M44 94 L44 128 M80 94 L80 128'/>" +
+    "<g class='f-farw'><path class='f-thighB' d='M56 90 L86 90'/>" +
+      "<g class='f-shinB'><path d='M86 90 L86 128'/></g>" +
+      "<g class='f-footB'><path d='M84 128 L98 128'/></g></g>" +
+    "<path class='f-thigh' d='M56 90 L86 90'/>" +
+    "<g class='f-shin'><path d='M86 90 L86 128'/></g>" +
+    "<g class='f-foot2'><path d='M84 128 L98 128'/></g>" +
+    "<path class='f-torso f-torsoP' d='M54 48 L56 86'/>" +
+    "<circle class='f-head' cx='54' cy='28' r='12.5'/>" +
+    "<g class='f-face'><path d='M57 26 q3 -3.5 6 0'/><path d='M57 33.5 q3.5 3 7 0'/></g>" +
+    "<g class='f-armS'><path d='M55 56 L74 76'/></g>";
+  return "<svg class='fig anim-" + f.anim + "' style='--d:" + d + "' viewBox='0 0 120 150' xmlns='http://www.w3.org/2000/svg'>" +
+    (f.rig === "seat" ? seat : f.rig === "side" ? side : f.rig === "back" ? back : stand) + "</svg>";
+}
+/* Rep duration on the timer = the actual prescribed pace. */
+function repDur(ex, target) {
+  if (ex.paced || !target) return null;
+  return Math.min(15, Math.max(0.45, Math.round(60 / target * 100) / 100));
+}
+
+function hexToRgba(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return "rgba(" + ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")";
+}
+function setAccent(st) {
+  const hex = (st && st.accent) || "#F47D31";
+  document.documentElement.style.setProperty("--accent", hex);
+  document.documentElement.style.setProperty("--accent-soft", hexToRgba(hex, 0.12));
+}
+
+/* ================= TODAY TAB ================= */
+
+function renderToday() {
+  setAccent(null);
+  const now = new Date();
+  const h = now.getHours();
+  $("today-date").textContent = now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+  const streak = streakDays(), sess = S.sessions.length;
+  $("today-greet").textContent = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  // the dog offers the home-screen shortcut ONLY to warm users (joined the waitlist,
+  // or 2+ sessions) and retires after one tap — first-touch visitors never see it,
+  // so the email ask stays the only pre-signup ask
+  const dogOffersApp = !IS_STANDALONE && !S.dogA2hs && (S.waitlist || sess >= 2) && streak < 2;
+  $("today-welcome").textContent =
+    streak >= 2 ? "Day " + streak + " in a row! Good to see you."
+    : dogOffersApp ? "Want Settle one tap away, no app store? Tap me."
+    : sess > 0  ? "Good to see you back!"
+    :             "Pick how you're arriving below. I'll match sixty seconds of movement to it.";
+  const dogEl = $("today-dog");
+  dogEl.style.cursor = dogOffersApp ? "pointer" : "";
+  dogEl.onclick = dogOffersApp ? () => { S.dogA2hs = true; save(); openA2hs(); renderToday(); } : null;
+  $("night-note").style.display = (h >= 21 || h < 5) ? "block" : "none";
+  renderStreakChip();
+
+  const row = $("state-row");
+  row.innerHTML = "";
+  STATES.forEach(st => {
+    const b = document.createElement("button");
+    b.className = "moodcard-sm";
+    b.style.background = st.color;
+    b.style.color = st.ink;
+    b.innerHTML = "<div class='sc-title'>" + st.label + "</div>" +
+      "<div class='sc-sub'>" + st.desc + "</div>" + blobSVG(st.blob);
+    b.onclick = () => chooseState(st);
+    row.appendChild(b);
+  });
+
+  const tl = $("timeline");
+  tl.innerHTML = "";
+  TIMELINE.forEach(item => {
+    const st = STATES.find(s => s.id === item.stateId);
+    const isNow = h >= item.from && h < item.to;
+    const b = document.createElement("button");
+    b.className = "tl-item";
+    b.innerHTML =
+      "<div class='tl-ic' style='background:" + hexToRgba(st.color, 0.16) + "'>" +
+      "<div style='width:18px;height:18px;border-radius:50%;background:" + st.color + "'></div></div>" +
+      "<div><div class='tl-t'>" + item.title + "</div><div class='tl-s'>" + item.sub + "</div></div>" +
+      (isNow ? "<span class='tl-now'>NOW</span>" : "");
+    b.onclick = () => chooseState(st);
+    tl.appendChild(b);
+  });
+}
+
+$("see-all-states").onclick = () => showTab("explore");
+
+/* ================= EXPLORE TAB ================= */
+
+function renderExplore() {
+  setAccent(null);
+  const pick = $("state-pick");
+  pick.innerHTML = "";
+  STATES.forEach(st => {
+    const b = document.createElement("button");
+    b.className = "statecard";
+    b.style.background = st.color;
+    b.style.color = st.ink;
+    b.innerHTML = "<div><div class='sc-title'>" + st.label + "</div>" +
+      "<div class='sc-sub'>" + st.desc + "</div></div>" + blobSVG(st.blob);
+    b.onclick = () => chooseState(st);
+    pick.appendChild(b);
+  });
+
+  const mkRow = (parent, title, sub, chipCls, chipTxt, onclick) => {
+    const b = document.createElement("button");
+    b.className = "mv-row";
+    b.innerHTML = "<div><div class='mv-t'>" + title + "</div><div class='mv-s'>" + sub + "</div></div>" +
+      "<span class='chip " + chipCls + "'>" + chipTxt + "</span>";
+    b.onclick = onclick;
+    parent.appendChild(b);
+  };
+  const desk = $("lib-desk"); desk.innerHTML = "";
+  EXERCISES.filter(e => e.set === "desk").forEach(e =>
+    mkRow(desk, e.name, e.desc, "inv", "Invisible", () => chooseMove(e)));
+  const open = $("lib-open"); open.innerHTML = "";
+  EXERCISES.filter(e => e.set === "open").forEach(e =>
+    mkRow(open, e.name, e.desc, "full", "Full move", () => chooseMove(e)));
+  const calm = $("lib-calm"); calm.innerHTML = "";
+  CALM_PROTOCOLS.forEach((p, i) =>
+    mkRow(calm, p.name, p.desc, "calm", "Anywhere", () => chooseCalm(i)));
+}
+
+/* ================= YOU TAB ================= */
+
+function renderYou() {
+  setAccent(null);
+  $("yo-streak").textContent = streakDays();
+  $("yo-sess").textContent = S.sessions.length;
+  $("yo-cal").textContent = calLabel();
+  const drops = S.sessions.map(s => s.pre - s.post).filter(d => !isNaN(d));
+  $("yo-drop").textContent = drops.length
+    ? "−" + (Math.round(drops.reduce((a, b) => a + b, 0) / drops.length * 10) / 10)
+    : "–";
+  renderBadges();
+  renderWaitlistYou();
+  renderHistoryInto("yo-hist", "yo-hist-card");
+}
+
+$("btn-edit-baseline").onclick = () => openIntake();
+
+/* Everything lives in this browser — nothing is sent anywhere. Export lets a
+   tester send their sessions back to you; start-fresh re-runs the first-open flow. */
+$("btn-export").onclick = () => {
+  const out = { exported: new Date().toISOString(), ...S };
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" }));
+  a.download = "settle-data.json";
+  a.click();
+};
+$("btn-reset").onclick = () => {
+  if (!confirm("Erase your baseline, calibration and all session history on this device?")) return;
+  localStorage.removeItem(STORE_KEY);
+  location.reload();
+};
+
+/* ================= CHOOSE → PRESCRIPTION ================= */
+
+segInit("seg-activity");
+bindSlider("in-preanx", "preanx-val");
+
+/* Where-are-you selector — Headspace-style explicit pills; one tap flips
+   the whole prescription between invisible and full-movement. */
+function setCtx(v) {
+  if (current.calm || current.forcedList || S.context === v) return;
+  S.context = v; save();
+  current.override = null;
+  const list = tiersFor(S.context);
+  const sig = current.state && current.state.sig ? exById(current.state.sig[ctxById(S.context).set]) : null;
+  buildRx(sig ? Math.max(0, list.indexOf(sig)) : 0);
+  // deliberately silent: announcing here talks over the greeting/count-cue audio
+  // that's often still playing. The new number is on screen; the stepper still speaks.
+}
+document.querySelectorAll("#rx-ctxseg button").forEach(b => b.onclick = () => setCtx(b.dataset.v));
+bindSlider("in-postanx", "postanx-val");
+bindSlider("in-rpe", "rpe-val");
+
+function preVal() { return +$("in-preanx").value; }
+
+/* ---- baseline sheet — never required, opened from the "tune" link ---- */
+function openIntake() {
+  const p = prof();
+  $("in-age").value = p.age;
+  segSet("seg-activity", p.activity);
+  $("intake-h").textContent = S.profile ? "Your baseline" : "Tune your dose";
+  $("intake-sheet").classList.add("open");
+}
+$("btn-intake").onclick = () => {
+  const age = +$("in-age").value;
+  if (!age || age < 16 || age > 90) { alert("Enter an age between 16 and 90."); return; }
+  S.profile = { age, rhr: 70, activity: +segVal("seg-activity") };
+  save();
+  $("intake-sheet").classList.remove("open");
+  // If a prescription is on screen, re-dose it with the real baseline.
+  if (document.body.classList.contains("flow") && $("scr-rx").classList.contains("active") && !current.calm) {
+    buildRx(current.tier);
+  }
+};
+$("intake-sheet").onclick = (e) => {
+  if (e.target === $("intake-sheet")) $("intake-sheet").classList.remove("open");
+};
+$("btn-tune").onclick = () => openIntake();
+
+function chooseState(st) {
+  beacon("MoodPicked");   // content-free funnel step (2026-07-24) — never the mood itself
+  const calm = st.mode === "calm";
+  if (!calm && !S.context) { S.context = "public"; save(); }  // safe default, one-tap to flip on the Rx screen
+  current = { pre: preVal(), state: st, calm };
+  setAccent(st);
+  if (calm) {
+    buildCalm(0);
+    show("scr-rx");
+    speakLine("intro_" + st.id);
+    return;
+  }
+  const list = tiersFor(S.context);
+  const sig = exById(st.sig[ctxById(S.context).set]);
+  buildRx(Math.max(0, list.indexOf(sig)));
+  show("scr-rx");
+  // intro, then the target spoken as one seamless phrase
+  soundIntroToast();
+  playSeq(["intro_" + st.id, ...targetVids(current.target, current.ex)]);
+}
+
+/* Direct pick from the Explore library — no mood framing.
+   Honour the pick regardless of saved context: they know where they are. */
+function chooseMove(ex) {
+  current = { pre: preVal(), state: null, calm: false };
+  setAccent(null);
+  current.forcedList = EXERCISES.filter(e => e.set === ex.set).slice().sort((a, b) => a.hrFactor - b.hrFactor);
+  buildRx(current.forcedList.indexOf(ex));
+  show("scr-rx");
+  soundIntroToast();
+  playSeq(["intro_generic", ...targetVids(current.target, current.ex)]);
+}
+
+function chooseCalm(protoIdx) {
+  const st = STATES.find(s => s.id === "winddown");
+  current = { pre: preVal(), state: st, calm: true };
+  setAccent(st);
+  buildCalm(protoIdx);
+  show("scr-rx");
+  soundIntroToast();
+  speakLine("intro_calm");
+}
+
+$("voiceToggle").onclick = () => {
+  S.voice = (S.voice === false);
+  save(); renderVoiceBtn();
+  if (S.voice) speakLine("voice_on"); else stopSpeaking();
+};
+
+function currentList() { return current.forcedList || tiersFor(S.context); }
+
+/* The physiology card adapts to the movement's honest mechanism. */
+function gaugeCells(ex, zone, reps) {
+  const cal = ["Your dose level", calLabel(), false];
+  switch (ex.gauge) {
+    case "hr": return [
+      ["Target HR zone", zone.lo + "–" + zone.hi + " <em>bpm</em>", false],
+      ["Pace", (Math.round(reps / 6) / 10) + " <em>" + ex.unit + "/sec</em>", false],
+      ["Basis", "Karvonen 60–75% HRR", true], cal];
+    case "focus": return [
+      ["Mechanism", "Working-memory load", true],
+      ["Target", reps + " <em>" + ex.unit + "</em>", false],
+      ["Goal", "Saturate the loop", true], cal];
+    case "release": return [
+      ["Mechanism", "Tension contrast", true],
+      ["Basis", "Somatic discharge", true],
+      ["Goal", "Down-shift, not effort", true], cal];
+    case "pump": {
+      const mech = { drums: "Fast rhythmic pump", ankles: "Circulation pump" }[ex.id] || "Soleus muscle pump";
+      const goal = { drums: "Discharge the buzz", ankles: "Settle restless legs" }[ex.id] || "Gentle arousal lift";
+      return [
+        ["Mechanism", mech, true],
+        ["Target", reps + " <em>" + ex.unit + "</em>", false],
+        ["Goal", goal, true], cal];
+    }
+  }
+}
+
+function buildRx(tierIdx) {
+  if (current.calm) { buildCalm(tierIdx); return; }
+  $("rx-rep-card").style.display = "block";
+  $("rx-calm-card").style.display = "none";
+  const list = currentList();
+  tierIdx = Math.max(0, Math.min(tierIdx, list.length - 1));
+  current.tier = tierIdx;
+  const ex = list[tierIdx];
+  const st = current.state;
+  const P = prof();
+  const zone = karvonenZone(P.age, P.rhr);
+  const isDesk = ex.set === "desk";
+  current.ex = ex;
+  $("btn-tune").style.display = S.profile ? "none" : "block";
+
+  $("rx-head").textContent = st ? st.head : "Your minute";
+  $("rx-fig").innerHTML = "<div class='figbub'>" + figureHTML(ex) + "</div>";
+  $("rx-exname").textContent = ex.name;
+  $("rx-exctx").textContent = isDesk
+    ? "Invisible from the next desk over. Promise."
+    : "Full movement — you've got room.";
+  // where-are-you pills (hidden for explicit Explore picks — they chose the move)
+  $("rx-ctxseg").style.display = current.forcedList ? "none" : "flex";
+  document.querySelectorAll("#rx-ctxseg button").forEach(b =>
+    b.classList.toggle("sel", b.dataset.v === S.context));
+  $("btn-ease").style.display = tierIdx > 0 ? "block" : "none";
+
+  // hero: rep target for countable moves, guided pattern for paced ones
+  if (ex.paced) {
+    $("hero-reps").style.display = "none";
+    $("hero-calm").style.display = "block";
+    $("rx-heropat").textContent = ex.pattern;
+    $("rx-cycles-u").textContent = "guided by voice · 60 seconds";
+    current.target = null;
+  } else {
+    $("hero-reps").style.display = "block";
+    $("hero-calm").style.display = "none";
+    // your dose, unless you set your own — the coach paces to whatever's here
+    const reps = current.override || prescribeReps(ex, P, S.calibration);
+    current.target = reps;
+    $("rx-reps").textContent = reps;
+    $("rx-unit").textContent = ex.unit + " · 60 seconds" + (current.override ? " · your pick" : "");
+
+    // the app remembers: compare today's dose to your last run of this move
+    const know = $("rx-know");
+    const past = S.sessions.filter(s => s.ex === ex.id && s.target && s.rpe);
+    let knowLine = "";
+    if (!current.override && past.length) {
+      const last = past[past.length - 1];
+      if (last.rpe <= 4 && reps > last.target)
+        knowLine = "Last time " + last.target + " felt easy for you, so today it's " + reps + ".";
+      else if (last.rpe >= 8 && reps < last.target)
+        knowLine = last.target + " was a grind last time, easing you to " + reps + " today.";
+      else if (past.length >= 3)
+        knowLine = "Round " + (past.length + 1) + " of this move. Dose tuned by your last " + past.length + ".";
+    }
+    know.textContent = knowLine;
+    know.style.display = knowLine ? "block" : "none";
+  }
+  if (ex.paced) $("rx-know").style.display = "none";
+  // counting is the mechanism — make sure they know BEFORE the minute starts
+  // (mirrors the recorded tgt_count line; hidden for release-style moves where feel > count)
+  $("rx-countcue").style.display = (!ex.paced && ex.gauge !== "release") ? "inline-block" : "none";
+  // the dog's pre-snack pep talk, matched to how they said they're arriving
+  const DOG_LINES = {
+    racing: "I'll count with you.",
+    wired: "You bring the speed. I'll keep count.",
+    low: "Just press Begin. I'll handle the rest.",
+    tense: "Slow and heavy. I'll pace you.",
+  };
+  $("rx-dog-line").textContent = ex.paced
+    ? "Follow my voice. I'll pace the whole minute."
+    : (current.state && DOG_LINES[current.state.id]) || "One minute. I'll count you through it.";
+
+  const sigEx = st && st.sig ? exById(st.sig[isDeskSet(list) ? "desk" : "open"]) : null;
+  const recIdx = sigEx ? list.indexOf(sigEx) : tierIdx;
+
+  if (st) {
+    // memory: how often movement has eased this exact feeling before
+    const eased = S.sessions.filter(s => s.state === st.id && (s.pre - s.post) > 0).length;
+    $("rx-state").textContent = "You're arriving — " + st.label.toLowerCase() +
+      (eased >= 2 ? " · movement has eased this feeling for you " + eased + " times" : "");
+    $("rx-rationale").textContent = st.rationale;
+    $("rx-rec").innerHTML = "For this, <b>" + list[Math.max(0, recIdx)].name.toLowerCase() +
+      "</b> tends to work best — " + st.rec;
+    $("rx-state").style.display = "block";
+    $("rx-rec").style.display = "block";
+  } else {
+    $("rx-state").style.display = "none";
+    $("rx-rec").style.display = "none";
+    $("rx-rationale").textContent = "";
+  }
+
+  const pick = $("tier-pick");
+  pick.innerHTML = "";
+  list.forEach((e, i) => {
+    const b = document.createElement("button");
+    b.innerHTML = "<div class='t-name'>" + e.name +
+      (i === recIdx && st ? " <span class='rec-badge'>BEST FIT</span>" : "") +
+      (CLASSIC_IDS.includes(e.id) ? " <span class='rec-badge' style='color:#8A8378'>CLASSIC</span>" : "") +
+      "</div><div class='t-desc'>" + e.desc + "</div>";
+    if (i === tierIdx) b.classList.add("sel");
+    b.onclick = () => { current.override = null; buildRx(i); };
+    pick.appendChild(b);
+  });
+
+  $("ex-blurb").innerHTML = "<b>" + ex.name + ".</b> " + ex.blurb;
+
+  // mechanism-honest physiology card
+  const cells = gaugeCells(ex, zone, current.target || 0);
+  const grid = $("rx-cells");
+  grid.innerHTML = "";
+  cells.forEach(([lab, val, small]) => {
+    const d = document.createElement("div");
+    d.className = "rx-cell";
+    d.innerHTML = "<div class='label'>" + lab + "</div><div class='v" + (small ? " small" : "") + "'>" + val + "</div>";
+    grid.appendChild(d);
+  });
+  $("rx-note").textContent = !S.profile
+    ? "Dose estimated from a typical baseline (35, lightly active). Your feedback after each minute corrects it automatically, or tune the real numbers in ten seconds."
+    : (S.sessions.length === 0
+      ? "First session is a starting estimate. Your feedback afterward tunes every future dose. It gets smarter each time."
+      : "Your dose level is " + calLabel().toLowerCase() + ", learned from what you've told the app after past snacks.");
+}
+function isDeskSet(list) { return list.length && list[0].set === "desk"; }
+
+function buildCalm(idx) {
+  $("rx-rep-card").style.display = "none";
+  $("rx-calm-card").style.display = "block";
+  $("hero-reps").style.display = "none";
+  $("hero-calm").style.display = "block";
+  $("btn-ease").style.display = "none";
+  $("btn-tune").style.display = "none";   // calm mode doesn't use the dose engine
+  current.tier = idx;
+  const proto = CALM_PROTOCOLS[idx];
+  current.protocol = proto;
+  current.target = null;
+  const st = current.state;
+
+  $("rx-head").textContent = st.head;
+  $("rx-fig").innerHTML = "";   // the breathing orb is the visual for calm mode
+  $("rx-ctxseg").style.display = "none";  // breathing works anywhere
+  $("rx-exname").textContent = proto.name;
+  $("rx-exctx").textContent = "Invisible by design — breathe anywhere, even mid-meeting.";
+
+  $("rx-state").textContent = "You're arriving — " + st.label.toLowerCase();
+  $("rx-rationale").textContent = st.rationale;
+  $("rx-rec").innerHTML = "For this, <b>" + CALM_PROTOCOLS[0].name.toLowerCase() +
+    "</b> tends to work best — " + st.rec;
+  $("rx-state").style.display = "block";
+  $("rx-rec").style.display = "block";
+
+  const pick = $("tier-pick");
+  pick.innerHTML = "";
+  CALM_PROTOCOLS.forEach((p, i) => {
+    const b = document.createElement("button");
+    b.innerHTML = "<div class='t-name'>" + p.name +
+      (i === 0 ? " <span class='rec-badge'>BEST FIT</span>" : "") +
+      "</div><div class='t-desc'>" + p.desc + "</div>";
+    if (i === idx) b.classList.add("sel");
+    b.onclick = () => buildCalm(i);
+    pick.appendChild(b);
+  });
+  $("ex-blurb").innerHTML = "<b>" + proto.name + ".</b> " + proto.blurb;
+
+  const cycleSecs = proto.steps.reduce((a, s) => a + s.dur, 0);
+  $("rx-heropat").textContent = proto.desc;
+  $("rx-cycles-u").textContent = proto.loop
+    ? "~" + Math.max(1, Math.round(60 / cycleSecs)) + " gentle cycles · 60 seconds"
+    : proto.steps.length + " gentle holds · 60 seconds";
+  $("rx-proto").textContent = proto.name;
+  $("rx-pattern").textContent = proto.steps.map(s => s.dur + "s").join(" · ");
+}
+
+/* You can always set your own dose — the coach paces the minute to it. */
+function stepReps(dirn) {
+  if (current.calm || !current.ex || current.ex.paced) return;
+  // steppers walk the dose grid — like adding a plate
+  let i = TP_GRID.indexOf(current.target);
+  if (i < 0) i = TP_GRID.indexOf(snapGrid(current.target));
+  // clamp to this exercise's recorded range so the voice always has the phrase
+  const [w0, w1] = gridWindow(current.ex);
+  current.override = TP_GRID[Math.min(w1, Math.max(w0, i + dirn))];
+  buildRx(current.tier);
+  announceTarget();   // speak the new number once tapping settles
+}
+$("rep-minus").onclick = () => stepReps(-1);
+$("rep-plus").onclick = () => stepReps(1);
+
+$("btn-rx-back").onclick = () => { stopSpeaking(); exitFlow(); };
+
+/* Logo = home base. Works from anywhere, including mid-timer. */
+$("logo-home").onclick = () => {
+  if (timerInt) { clearInterval(timerInt); timerInt = null; }
+  releaseWakeLock();
+  stopSpeaking();
+  activeTab = "today";
+  exitFlow();
+};
+$("btn-start").onclick = () => {
+  current.pre = preVal();   // capture the reading at the moment they commit
+  beacon("SnackStart");
+  current.calm ? startCalm() : startTimer();
+};
+$("btn-ease").onclick = () => { if (!current.calm && current.tier > 0) { current.override = null; buildRx(current.tier - 1); } };
+
+/* ================= TIMER ================= */
+
+/* Screen wake lock: phones dim/black the screen mid-exercise because nobody's
+   touching it — exactly when they're mid-heel-drums. Hold the screen awake for
+   the minute, release the moment it ends. Voice keeps playing regardless (media
+   channel), but the figure/timer should stay visible too. */
+let wakeLock = null;
+async function grabWakeLock() {
+  if (!("wakeLock" in navigator)) return;   // older browsers: graceful no-op
+  try { wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
+}
+function releaseWakeLock() {
+  if (wakeLock) { try { wakeLock.release(); } catch (e) {} wakeLock = null; }
+}
+/* The OS auto-releases the lock if they switch apps; re-grab when they return mid-timer. */
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && timerInt) grabWakeLock();
+});
+
+const RING_LEN = 2 * Math.PI * 110;
+$("ring").style.strokeDasharray = RING_LEN;
+let activeMilestones = [];
+
+function startTimer() {
+  $("timer-exercise").style.display = "block";
+  $("timer-calm").style.display = "none";
+  const ex = current.ex;
+  $("t-ex").textContent = ex.name;
+  // figure animates at the actual prescribed pace — move with it and you're on dose
+  $("t-fig").innerHTML = figureHTML(ex, repDur(ex, current.target));
+  // the target front and center; the anchor line beneath it
+  $("t-goal").style.display = ex.paced ? "none" : "block";
+  if (!ex.paced) $("t-goal").innerHTML = "<b>" + current.target + "</b>" + ex.unit;
+  $("t-paceline").innerHTML = ex.paced
+    ? "follow my cues, I'll pace the minute"
+    : ex.gauge === "release"
+      ? "follow the feel, not the count"
+      : "count each one, the counting is the anchor";
+  $("milestone").innerHTML = "";
+  // Per-exercise script. Classics run under a mood get that mood's cue up front.
+  let ms = milestonesFor(ex);
+  if (current.state && !MILESTONE_SETS[ex.id]) {
+    ms = [{ t: 0, vid: "cue_" + current.state.id }, ...ms.slice(1)];
+  }
+  activeMilestones = ms;
+  grabWakeLock();
+  show("scr-timer");
+
+  let elapsed = 0;
+  tick(elapsed);
+  timerInt = setInterval(() => {
+    elapsed++;
+    if (elapsed >= 60) {
+      clearInterval(timerInt); timerInt = null;
+      finishTimer(false);
+      return;
+    }
+    tick(elapsed);
+  }, 1000);
+}
+
+function tick(elapsed) {
+  const remain = 60 - elapsed;
+  $("t-sec").textContent = remain;
+  $("ring").style.strokeDashoffset = RING_LEN * (elapsed / 60);
+  const m = [...activeMilestones].reverse().find(m => elapsed >= m.t);
+  const el = $("milestone");
+  if (m && el.dataset.t !== String(m.t)) {
+    el.dataset.t = m.t;
+    el.textContent = line(m.vid);
+    el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+    speakLine(m.vid);
+  }
+}
+
+/* ---- calm / breathing pacer ---- */
+function applyStep(step) {
+  $("orb-phase").textContent = line(step.vid);
+  const orb = $("orb");
+  orb.style.transitionDuration = step.dur + "s";
+  if (step.orb === "in") orb.style.transform = "scale(1)";
+  else if (step.orb === "in2") orb.style.transform = "scale(1.1)";
+  else if (step.orb === "out") orb.style.transform = "scale(0.4)";
+  /* cueLate: start this step's voice a beat late so the PREVIOUS line can finish.
+     The physiological sigh's second-inhale step lasts 1s but its clip runs 1.43s —
+     without this, the next cue's stopSpeaking() chops it at "a second shor—". */
+  if (step.cueLate) {
+    clearTimeout(cueLateT);
+    cueLateT = setTimeout(() => speakLine(step.vid, { rate: 0.8 }), step.cueLate * 1000);
+  } else {
+    speakLine(step.vid, { rate: 0.8 });
+  }
+}
+
+function startCalm() {
+  $("timer-exercise").style.display = "none";
+  $("timer-calm").style.display = "block";
+  const proto = current.protocol;
+  const orb = $("orb");
+  orb.style.transition = "none"; orb.style.transform = "scale(0.4)";
+  void orb.offsetWidth; orb.style.transition = "";
+  $("calm-inst").textContent = proto.loop ? "Match your breath to the circle." : "Ease into each hold. No strain.";
+  grabWakeLock();
+  show("scr-timer");
+
+  let elapsed = 0, stepIdx = 0, stepElapsed = 0;
+  applyStep(proto.steps[0]);
+  $("calm-remain").textContent = 60;
+  timerInt = setInterval(() => {
+    elapsed++; stepElapsed++;
+    $("calm-remain").textContent = Math.max(0, 60 - elapsed);
+    if (elapsed >= 60) { clearInterval(timerInt); timerInt = null; finishTimer(false); return; }
+    if (stepElapsed >= proto.steps[stepIdx].dur) {
+      stepElapsed = 0; stepIdx++;
+      if (stepIdx >= proto.steps.length) {
+        if (proto.loop) { stepIdx = 0; }
+        else { clearInterval(timerInt); timerInt = null; finishTimer(false); return; }
+      }
+      applyStep(proto.steps[stepIdx]);
+    }
+  }, 1000);
+}
+
+$("btn-abort").onclick = () => { if (timerInt) clearInterval(timerInt); timerInt = null; stopSpeaking(); finishTimer(true); };
+
+function finishTimer(aborted) {
+  releaseWakeLock();
+  current.aborted = aborted;
+  if (!aborted) beacon("SnackComplete");
+  stopSpeaking();
+  const calm = current.calm;
+  const paced = !calm && current.ex && current.ex.paced;
+  $("post-reps-card").style.display = (calm || paced) ? "none" : "block";
+  $("post-rpe-card").style.display = calm ? "none" : "block";
+  $("post-extra").style.display = calm ? "none" : "block";
+  $("post-extra").open = false;
+  if (!calm && !paced) {
+    $("post-reps-label").textContent = current.ex.unit.charAt(0).toUpperCase() + current.ex.unit.slice(1) + " completed";
+    $("in-reps").value = aborted ? "" : current.target;
+  }
+  $("p-post-title").textContent = calm ? "How do you feel?" : "Where's your head at now?";
+  $("p-post-sub").textContent = calm
+    ? "Just one input. Did it help you settle?"
+    : "One slider and you're done.";
+  $("in-postanx").value = Math.max(0, current.pre - 2);
+  $("postanx-val").textContent = $("in-postanx").value;
+  show("scr-post");
+  if (navigator.vibrate) navigator.vibrate(calm ? [200] : [120, 60, 120]);
+}
+
+/* ================= FEEDBACK & RESULTS ================= */
+
+$("btn-post").onclick = () => {
+  const post = +$("in-postanx").value;
+
+  if (current.calm) {
+    S.sessions.push({
+      date: new Date().toISOString(), calm: true, protocol: current.protocol.id,
+      state: current.state ? current.state.id : null, pre: current.pre, post,
+    });
+    save();
+    $("res-cal-label").textContent = "Notes";
+    const settled = current.pre - post;
+    $("res-cal").innerHTML =
+      "· " + current.protocol.name + " · " + (current.aborted ? "stopped early" : "completed") + "<br>" +
+      (settled > 0
+        ? "· you settled <b>" + settled + " point" + (settled === 1 ? "" : "s") + "</b>, the exhale did its job"
+        : "· settling often lands in the minutes after; give it a moment") +
+      "<br>· wind-down doesn't change your exercise dose — it's a separate track";
+  } else {
+    const paced = current.ex.paced;
+    const tuned = $("post-extra").open;   // they chose to teach the app
+    const done = paced ? 1 : (+$("in-reps").value || 0);
+    const target = paced ? 1 : current.target;
+    const rpe = tuned ? +$("in-rpe").value : null;
+    const prevCal = S.calibration;
+    let next = prevCal, why = [];
+    if (tuned) ({ next, why } = recalibrate(S.calibration, rpe, done, target));
+    // Self-set doses teach the system directly: pick above the prescription
+    // and handle it, and future doses drift toward your preference.
+    if (tuned && current.override && !current.aborted && !paced) {
+      const prescribed = prescribeReps(current.ex, prof(), prevCal);
+      const ratio = current.target / prescribed;
+      if (ratio > 1.1 && rpe <= 7) {
+        const boost = Math.min(1.15, 1 + (ratio - 1) * 0.3);
+        next = Math.min(1.8, Math.round(next * boost * 100) / 100);
+        why.push("you set your dose " + Math.round((ratio - 1) * 100) + "% above the prescription and handled it → +" + Math.round((boost - 1) * 100) + "%");
+      } else if (ratio < 0.9 && rpe >= 5) {
+        next = Math.max(0.5, Math.round(next * 0.95 * 100) / 100);
+        why.push("you chose a lighter dose than prescribed → −5%");
+      }
+    }
+    S.calibration = next;
+    S.sessions.push({
+      date: new Date().toISOString(), ex: current.ex.id, ctx: S.context,
+      state: current.state ? current.state.id : null,
+      target: current.target, done: (paced || !tuned) ? null : done, rpe, pre: current.pre, post,
+    });
+    save();
+    $("res-cal-label").textContent = "Your next dose";
+    const easier = S.calibration > prevCal, harder = S.calibration < prevCal;
+    $("res-cal").innerHTML = tuned
+      ? ((easier ? "· You handled that well, so your doses will run a little bigger from here."
+          : harder ? "· That was a big one, so the next few will land a little easier. That's the app doing its job."
+          : "· That was dosed about right, so it stays put.") +
+        (paced
+          ? "<br>· " + current.ex.name + " stays voice-paced either way."
+          : "<br>· Next " + current.ex.name.toLowerCase() + ": <b>" +
+            prescribeReps(current.ex, prof(), S.calibration) + " " + current.ex.unit + "</b>."))
+      : "· Session logged. Your dose stays put.<br>· Open \"fine-tune\" after any snack and the app learns what's easy or hard for you.";
+  }
+  renderStreakChip();
+  checkin("snack");   // joined users: a completed snack counts as a check-in
+
+  // celebrate any badge this session just unlocked
+  const nowEarned = earnedBadges();
+  const fresh = nowEarned.filter(id => !(S.badges || []).includes(id));
+  S.badges = nowEarned; save();
+  const rb = $("res-badges");
+  rb.style.display = fresh.length ? "block" : "none";
+  // a badge is a big deal — make the screen say so
+  if (fresh.length) {
+    setTimeout(confettiBurst, 380);
+    if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+  }
+  rb.innerHTML = fresh.map(id => {
+    const b = BADGES.find(x => x.id === id);
+    return "<div class='badge-new'><span style='font-size:24px'>" + b.icon +
+      "</span><span>New badge — <b>" + b.name + "</b>. " + b.desc + ".</span></div>";
+  }).join("");
+
+  const d = current.pre - post;
+  const dEl = $("res-delta");
+  dEl.textContent = d > 0 ? "−" + d : d < 0 ? "+" + (-d) : "±0";
+  dEl.className = "d " + (d > 0 ? "good" : "flat");
+  $("res-sloth").style.display = d > 0 ? "block" : "none";
+  $("res-cap").textContent = "you went " + current.pre + " → " + post;
+  $("res-head").textContent = d > 0 ? "Nicely done." : "You showed up.";
+  $("res-line").textContent = d > 0
+    ? "You settled in one minute. That's the whole idea."
+    : (d === 0
+        ? "No shift yet. The settling often lands a few minutes after, and A slow minute of breathing can help it along."
+        : "One snack doesn't always land. Let's try a breathing exercise — a long exhale reaches what movement sometimes can't.");
+  // Offer a breathing follow-up when movement didn't shift things (not after a calm session — they just breathed)
+  $("btn-breathe").style.display = (d <= 0 && !current.calm) ? "block" : "none";
+
+  renderWaitlist();
+  renderHistoryInto("hist", "hist-card");
+  show("scr-result");
+  speakLine(d > 0 ? "res_good" : d === 0 ? "res_zero" : "res_neg");
+
+  // The ask comes to them: after every completed snack the waitlist sheet
+  // pops itself (until they join). Result + confetti get the stage first.
+  const wins = S.sessions.filter(s => (s.pre - s.post) > 0).length;
+  if (!S.waitlist) {
+    setTimeout(() => openWlSheet(d > 0 && wins >= 2 ? "wins" : "post"), fresh.length ? 2400 : 1400);
+  }
+};
+
+function renderHistoryInto(histId, cardId) {
+  const sess = S.sessions.slice(-12);
+  if (sess.length < 2) { $(cardId).style.display = "none"; return; }
+  $(cardId).style.display = "block";
+  const hist = $(histId);
+  hist.innerHTML = "";
+  const maxDrop = Math.max(1, ...sess.map(s => Math.abs(s.pre - s.post)));
+  sess.forEach(s => {
+    const drop = s.pre - s.post;
+    const bar = document.createElement("div");
+    bar.className = "bar" + (drop < 0 ? " up" : "");
+    bar.style.height = Math.round(Math.abs(drop) / maxDrop * 100) + "%";
+    bar.title = new Date(s.date).toLocaleDateString() + ": " + s.pre + "→" + s.post;
+    hist.appendChild(bar);
+  });
+}
+
+/* Breathing follow-up when the snack didn't shift things: the post score
+   becomes the new pre, so the wind-down gets honest before/after numbers. */
+$("btn-breathe").onclick = () => {
+  const st = STATES.find(s => s.id === "winddown");
+  current = { pre: +$("in-postanx").value, state: st, calm: true };
+  setAccent(st);
+  buildCalm(1);   // physiological sigh — fastest pattern for acute stress
+  $("rx-state").textContent = "Still buzzing — that happens";
+  $("rx-rec").innerHTML = "Movement didn't land this time. The <b>physiological sigh</b> is the fastest breathing pattern for dropping acute stress — and it's invisible.";
+  show("scr-rx");
+  speakLine("intro_calm");
+};
+
+/* ================= WAITLIST (Netlify Forms — no backend) ================= */
+
+/* Social proof, kept honest: set this to the real signup count from
+   app.netlify.com → Forms → waitlist, then redeploy. While null, the
+   card leans on early-adopter framing instead of a number. */
+const WAITLIST_COUNT = null;   // e.g. 37
+
+function renderWaitlist() {
+  $("wl-social").textContent = WAITLIST_COUNT
+    ? "Join " + WAITLIST_COUNT + " others already on the list."
+    : "Be one of the first in line.";
+  const joined = !!S.waitlist;
+  if (!joined) beaconWaitlistSeen();
+  $("wl-form").style.display = joined ? "none" : "block";
+  $("wl-done").style.display = joined ? "block" : "none";
+  // slide the card in a beat after the results screen appears
+  const card = $("wl-card");
+  card.classList.remove("wl-slide"); void card.offsetWidth; card.classList.add("wl-slide");
+}
+function renderWaitlistYou() {
+  if (!S.waitlist) beaconWaitlistSeen();
+  $("wl2-form").style.display = S.waitlist ? "none" : "block";
+  $("wl2-done").style.display = S.waitlist ? "block" : "none";
+}
+/* The floating pill: on screen everywhere until they join (flow screens hide it via CSS). */
+function renderWlFab() {
+  $("wl-fab").style.display = S.waitlist ? "none" : "flex";
+  $("wl4-form").style.display = S.waitlist ? "none" : "block";
+  $("wl4-done").style.display = S.waitlist ? "block" : "none";
+  $("wl5-card").style.display = S.waitlist ? "none" : "block";
+}
+/* One sheet, two doors: the earned moment (2 wins) gets personal copy; the pill gets the pitch. */
+function openWlSheet(mode) {
+  // one voice, zero preamble (Jonny, 2026-07-15): the copy lives in the static sheet
+  beaconWaitlistSeen();
+  $("wl-sheet").classList.add("open");
+}
+
+/* One join pipeline for all three entry points (results card, sheet, You tab). */
+/* Ad-attribution helpers (2026-07-20, Jonny's call — see 02 Rules & Decisions):
+   the email is SHA-256-hashed IN THE BROWSER before anything leaves the page;
+   Meta never receives the raw address. fbp/fbc ride along so the server-side
+   Conversions API event can be matched + deduped with the browser one. */
+async function sha256Hex(str) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+function cookieVal(name) {
+  const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+  return m ? decodeURIComponent(m[1]) : "";
+}
+function fbcVal() {
+  const c = cookieVal("_fbc");
+  if (c) return c;
+  const id = new URLSearchParams(location.search).get("fbclid");
+  return id ? "fb.1." + Date.now() + "." + id : "";
+}
+async function joinWaitlist(emailId, noteId, btnId) {
+  const email = $(emailId).value.trim();
+  const note = $(noteId);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    note.textContent = "That email doesn't look right — mind checking it?";
+    note.style.display = "block"; return;
+  }
+  note.style.display = "none";
+  const btn = $(btnId);
+  const origLabel = btn.textContent;
+  btn.disabled = true; btn.textContent = "Adding you…";
+  let emHash = "";
+  try { emHash = await sha256Hex(email.toLowerCase()); } catch (e) {}
+  const leadId = "lead_" + Date.now() + "_" + Math.random().toString(36).slice(2, 10);
+  const body = new URLSearchParams({
+    "form-name": "waitlist", email, sessions: String(S.sessions.length),
+    utm_source: (S.utm && S.utm.source) || "", utm_content: (S.utm && S.utm.content) || "",
+    event_id: leadId, fbp: cookieVal("_fbp"), fbc: fbcVal(),
+  }).toString();
+  fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body })
+    .then(r => {
+      if (!r.ok) throw new Error();
+      S.waitlist = { email, date: new Date().toISOString() };
+      save();
+      if (window.fbq) {
+        if (emHash) fbq("init", "199999138000739", { em: emHash });   // manual advanced matching
+        fbq("track", "Lead", {}, { eventID: leadId });                // deduped vs the CAPI copy
+      }
+      $("wl-sheet").classList.remove("open");
+      renderWaitlist(); renderWaitlistYou(); renderWlFab();
+    })
+    .catch(() => {
+      btn.disabled = false; btn.textContent = origLabel;
+      note.textContent = "Couldn't reach the list — check your connection and try again.";
+      note.style.display = "block";
+    });
+}
+/* Return check-ins (2026-07-22, Jonny's call — see 02 Rules & Decisions): once
+   someone has JOINED the waitlist, we count their return visits and completed
+   snacks — the same privacy-protected hashed email, a running session count,
+   nothing else. Non-joined visitors send nothing; moods, ratings and results
+   still never leave the browser. Throttled to once per day, plus once more on
+   a day's first completed snack. No-ops on local/offline copies. */
+async function checkin(kind) {
+  try {
+    if (!S.waitlist || !S.waitlist.email) return;
+    if (location.protocol === "file:") return;
+    const today = new Date().toISOString().slice(0, 10);
+    const n = S.sessions.length;
+    const last = S.checkin || {};
+    if (last.day === today && n <= (last.sessions || 0)) return;
+    const eh = await sha256Hex(S.waitlist.email.trim().toLowerCase());
+    const body = new URLSearchParams({
+      "form-name": "checkin", eh, sessions: String(n), kind,
+      utm_source: new URLSearchParams(location.search).get("utm_source") || (S.utm && S.utm.source) || "", day: today,
+    }).toString();
+    const r = await fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body });
+    if (r.ok) { S.checkin = { day: today, sessions: n }; save(); }
+  } catch (e) {}
+}
+$("wl-join").onclick  = () => joinWaitlist("wl-email",  "wl-note",  "wl-join");
+$("wls-join").onclick = () => joinWaitlist("wls-email", "wls-note", "wls-join");
+$("wl2-join").onclick = () => joinWaitlist("wl2-email", "wl2-note", "wl2-join");
+$("wls-later").onclick = () => $("wl-sheet").classList.remove("open");
+$("wl-fab").onclick = () => openWlSheet("fab");
+$("wl4-join").onclick = () => joinWaitlist("wl4-email", "wl4-note", "wl4-join");
+$("wl5-join").onclick = () => joinWaitlist("wl5-email", "wl5-note", "wl5-join");
+renderWlFab();
+$("wl-sheet").onclick = (e) => {
+  if (e.target === $("wl-sheet")) $("wl-sheet").classList.remove("open");
+};
+
+/* ---- "Add Settle to your home screen" (opt-in, deliberately out of the waitlist funnel).
+   Android/Chrome fires beforeinstallprompt: we stash it and show the REAL install prompt.
+   iOS has no install API, so we show Share -> Add to Home Screen steps instead.
+   Hidden entirely when already running from the home screen. ---- */
+let a2hsEvt = null;
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); a2hsEvt = e; });
+const IS_STANDALONE = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+if (!IS_STANDALONE) $("a2hs-card").style.display = "";
+function openA2hs() {
+  if (a2hsEvt) { a2hsEvt.prompt(); a2hsEvt = null; return; }
+  $("a2hs-ios").style.display = IS_IOS ? "" : "none";
+  $("a2hs-other").style.display = IS_IOS ? "none" : "";
+  $("a2hs-sheet").classList.add("open");
+}
+$("btn-a2hs").onclick = openA2hs;
+/* the sleek entry point: a quiet button inside every "You're in" success state —
+   the install ask comes only AFTER the email is captured, never beside it */
+document.querySelectorAll(".a2hs-open").forEach(b => {
+  b.onclick = openA2hs;
+  if (IS_STANDALONE) b.style.display = "none";
+});
+$("a2hs-close").onclick = () => $("a2hs-sheet").classList.remove("open");
+$("a2hs-sheet").onclick = (e) => {
+  if (e.target === $("a2hs-sheet")) $("a2hs-sheet").classList.remove("open");
+};
+
+$("btn-again").onclick = () => {
+  $("in-preanx").value = 6; $("preanx-val").textContent = "6";
+  $("in-rpe").value = 6; $("rpe-val").textContent = "6";
+  activeTab = "today";
+  exitFlow();
+};
+
+/* ================= BOOT ================= */
+
+renderVoiceBtn();
+renderStreakChip();
+
+// remember which ad brought them here (first touch wins)
+const _qp = new URLSearchParams(location.search);
+if (_qp.get("utm_source") && !S.utm) {
+  S.utm = { source: _qp.get("utm_source") || "", content: _qp.get("utm_content") || "" };
+  save();
+}
+
+// joined users: count the return (hashed email + session count only)
+checkin("visit");
+
+// No intake gate. Everyone lands on "How are you feeling?" —
+// the one-time setup sheet appears only after they pick a problem to fix.
+showTab("today");
+
+// Deep link (2026-07-24, for the welcome email): ?mood=<state id> lands straight
+// on that mood's prescription — exactly as if the card was tapped. /3pm → mood=tense.
+(function () {
+  const dlSt = STATES.find(s => s.id === _qp.get("mood"));
+  if (dlSt) chooseState(dlSt);
+})();
+</script>
+</body>
+</html>

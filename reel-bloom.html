@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Settle reel master — the far look (bloom)</title>
+<style>
+  :root {
+    --ink: #2b2320;
+    --cream: #fdf6ec;
+    --orange: #f47b3f;
+    --orange-deep: #e05f1f;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: #171310; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center;
+         font-family: ui-rounded, "SF Pro Rounded", "Nunito", "Quicksand", system-ui, sans-serif; }
+
+  /* ---- 9:16 stage, cqmin sizing so any window/zoom records correctly ---- */
+  .stage {
+    position: relative;
+    aspect-ratio: 9 / 16;
+    height: min(100vh, 177.78vw);
+    container-type: size;
+    overflow: hidden;
+    background: #fdf0dd;
+  }
+  canvas#scene { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+  /* ---- overlay layers ---- */
+  .layer { position: absolute; inset: 0; pointer-events: none; }
+
+  /* look-away dim: warm glow, screen still "alive" in periphery */
+  #dim {
+    opacity: 0; transition: opacity 1.4s ease;
+    background: radial-gradient(ellipse at 50% 42%,
+      rgba(38,28,22,0.78) 0%, rgba(20,14,10,0.93) 78%);
+  }
+  #dim.on { opacity: 1; }
+
+  /* progress arc during look-away */
+  #arcWrap { display: flex; align-items: center; justify-content: center;
+             opacity: 0; transition: opacity 1s ease 0.6s; }
+  #arcWrap.on { opacity: 1; }
+  #arcWrap svg { width: 26cqmin; height: 26cqmin; }
+  #arcTrack { stroke: rgba(253,246,236,0.16); }
+  #arcFill  { stroke: rgba(253,246,236,0.75); stroke-linecap: round;
+              transform: rotate(-90deg); transform-origin: 50% 50%; }
+
+  /* text system */
+  .txt {
+    position: absolute; left: 8cqmin; right: 8cqmin;
+    text-align: center; color: #3a2f26;
+    text-shadow: 0 0.3cqmin 2.2cqmin rgba(253,240,221,0.9), 0 0 1cqmin rgba(253,240,221,0.7);
+    font-weight: 800; letter-spacing: -0.01em;
+  }
+  .txt.dark {
+    color: var(--cream);
+    text-shadow: 0 0.4cqmin 2.6cqmin rgba(20,14,10,0.8), 0 0 1cqmin rgba(20,14,10,0.55);
+  }
+  .txt .w { display: inline-block; opacity: 0; transform: translateY(1.6cqmin) scale(0.92); }
+  .txt .w.pop { animation: pop 0.42s cubic-bezier(0.2, 1.4, 0.4, 1) forwards; }
+  @keyframes pop { to { opacity: 1; transform: translateY(0) scale(1); } }
+  .txt.big  { top: 20cqmin; font-size: 8.4cqmin; line-height: 1.16; }
+  .txt.mid  { top: 24cqmin; font-size: 6.4cqmin; line-height: 1.2; }
+  .txt.low  { bottom: 26cqmin; font-size: 5.4cqmin; line-height: 1.25; }
+  .txt.whisper {
+    bottom: 13cqmin; font-size: 3.4cqmin; font-weight: 600;
+    color: rgba(58,47,38,0.78); letter-spacing: 0.02em;
+  }
+  .txt.whisper.dark { color: rgba(253,246,236,0.85); }
+  .txt.center { top: 50%; transform: translateY(-50%); font-size: 6.8cqmin; line-height: 1.3; }
+  .fadeout { animation: fade 0.7s ease forwards; }
+  @keyframes fade { to { opacity: 0; } }
+
+  /* wordmark chrome */
+  #mark {
+    position: absolute; top: 4.6cqmin; left: 0; right: 0; text-align: center;
+    color: rgba(58,47,38,0.92); font-weight: 800; font-size: 4.2cqmin;
+    text-shadow: 0 0.3cqmin 1.6cqmin rgba(253,240,221,0.8);
+    opacity: 0; transition: opacity 0.8s;
+  }
+  #mark.on { opacity: 1; }
+  #mark .dot { color: var(--orange); }
+  #mark .tag { display: block; font-size: 2.3cqmin; font-weight: 700;
+               color: rgba(58,47,38,0.7); letter-spacing: 0.03em; margin-top: 0.6cqmin; }
+
+  /* end card (variant 2) */
+  #endcard {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3cqmin;
+    background: var(--cream); opacity: 0; transition: opacity 0.9s ease; pointer-events: none;
+  }
+  #endcard.on { opacity: 1; }
+  #endcard .dog { width: 34cqmin; height: 34cqmin; }
+  #endcard h2 { color: var(--ink); font-size: 6.6cqmin; font-weight: 800;
+                text-align: center; line-height: 1.2; padding: 0 10cqmin; letter-spacing: -0.01em; }
+  #endcard .sub { color: #7a6a5f; font-size: 3.6cqmin; font-weight: 700; }
+  #endcard .url { margin-top: 1cqmin; background: var(--orange); color: #fff;
+                  font-weight: 800; font-size: 4.2cqmin; padding: 2cqmin 5cqmin;
+                  border-radius: 100cqmin; box-shadow: 0 1.2cqmin 3cqmin rgba(224,95,31,0.35); }
+
+  /* recording-safe controls: appear on mouse move only, auto-hide */
+  #ctl {
+    position: fixed; left: 12px; bottom: 12px; z-index: 50;
+    background: rgba(12,16,15,0.92); color: #dfe8e4; border-radius: 10px;
+    font: 12px/1.6 ui-monospace, monospace; padding: 10px 13px;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  #ctl.show { opacity: 1; }
+  #ctl b { color: #fff; }
+  #ctl .on { color: #ffb27d; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <canvas id="scene"></canvas>
+
+  <div class="layer" id="dim"></div>
+  <div class="layer" id="arcWrap">
+    <svg viewBox="0 0 100 100" fill="none">
+      <circle id="arcTrack" cx="50" cy="50" r="44" stroke-width="2.6"/>
+      <circle id="arcFill" cx="50" cy="50" r="44" stroke-width="2.6"
+              stroke-dasharray="276.46" stroke-dashoffset="276.46"/>
+    </svg>
+  </div>
+
+  <div id="mark">Settle<span class="dot">.</span><span class="tag">movement snacks for your mind</span></div>
+  <div class="layer" id="txtLayer" style="pointer-events:none"></div>
+
+  <div id="endcard">
+    <svg class="dog" viewBox="0 0 120 120">
+      <ellipse cx="60" cy="118" rx="30" ry="5" fill="rgba(43,35,32,0.08)"/>
+      <path d="M28 44 Q22 20 38 26 Q46 30 46 40 Z" fill="#d99a4e"/>
+      <path d="M92 44 Q98 20 82 26 Q74 30 74 40 Z" fill="#d99a4e"/>
+      <circle cx="60" cy="56" r="34" fill="#eebd77"/>
+      <circle cx="47" cy="50" r="12" fill="#c98944" opacity="0.55"/>
+      <circle cx="47" cy="50" r="4.6" fill="#2b2320"/>
+      <circle cx="73" cy="50" r="4.6" fill="#2b2320"/>
+      <circle cx="48.6" cy="48.4" r="1.5" fill="#fff"/>
+      <circle cx="74.6" cy="48.4" r="1.5" fill="#fff"/>
+      <ellipse cx="60" cy="63" rx="6.4" ry="5" fill="#2b2320"/>
+      <path d="M60 68 Q60 74 52 74 M60 68 Q60 74 68 74" stroke="#2b2320" stroke-width="2.6"
+            fill="none" stroke-linecap="round"/>
+      <path d="M46 86 Q60 96 74 86 L74 92 Q60 102 46 92 Z" fill="#f47b3f"/>
+      <circle cx="60" cy="95" r="4" fill="#f7c948"/>
+    </svg>
+    <h2>Sixty seconds of movement, matched to how you feel.</h2>
+    <div class="sub">free · in your browser · nobody will notice</div>
+    <div class="url">settlemoves.com</div>
+  </div>
+</div>
+
+<div id="ctl">
+  <b>Settle reel master — the far look (bloom)</b><br>
+  <span id="vlabel"></span><br>
+  <b>1</b> minimal (~24s) · <b>2</b> minimal+CTA (~28s) · <b>3</b> loop (12.0s, sound OFF) · <b>4</b> guided far-look<br>
+  <b>S</b> sound: <span id="slabel" class="on">off</span> (off → meadow → meadow+chime) · <b>R</b> restart<br>
+  Record: window any size (stage letterboxes)· controls vanish after 2.5s stillness / any key
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var stage = document.getElementById("stage");
+  var canvas = document.getElementById("scene");
+  var ctx = canvas.getContext("2d");
+  var txtLayer = document.getElementById("txtLayer");
+  var dim = document.getElementById("dim");
+  var arcWrap = document.getElementById("arcWrap");
+  var arcFill = document.getElementById("arcFill");
+  var mark = document.getElementById("mark");
+  var endcard = document.getElementById("endcard");
+  var ARC_LEN = 276.46;
+
+  // ---------- params ----------
+  var qs = new URLSearchParams(location.search);
+  var variant = +(qs.get("v") || 1);          // 1 pure, 2 CTA, 3 loop
+  var seek = parseFloat(qs.get("t") || "0");  // debug seek (seconds)
+  var soundMode = 0;                          // 0 off, 1 water, 2 water+chime
+
+  // ---------- canvas sizing ----------
+  var W = 0, H = 0, DPR = Math.min(window.devicePixelRatio || 1, 2);
+  function resize() {
+    var r = stage.getBoundingClientRect();
+    W = r.width; H = r.height;
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  // ---------- bloom scene ----------
+  // dusk meadow: warm gradient sky, soft sun halo, ground band, one flower
+  // bloomP: 0 = closed bud, 1 = full bloom
+  var PETALS_OUT = 8, PETALS_IN = 5;
+  var GRASS = [];
+  for (var gb = 0; gb < 26; gb++)
+    GRASS.push({ x: Math.random(), h: 0.05 + Math.random() * 0.05, ph: Math.random() * 6.28, lean: (Math.random() - 0.5) * 0.5 });
+  var MOTES = [];
+  for (var mo = 0; mo < 14; mo++)
+    MOTES.push({ x: Math.random(), y: 0.25 + Math.random() * 0.5, ph: Math.random() * 6.28,
+                 sp: 0.5236 * (1 + (mo % 3)) });  // 12s-harmonic speeds → seamless loop
+
+  function ease(u) { return u < 0 ? 0 : u > 1 ? 1 : u * u * (3 - 2 * u); }
+
+  function petal(cx, cy, angle, len, wid, c1, c2) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(angle);
+    var grd = ctx.createLinearGradient(0, 0, 0, -len);
+    grd.addColorStop(0, c1);
+    grd.addColorStop(1, c2);
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(-wid, -len * 0.32, -wid * 0.86, -len * 0.8, 0, -len);
+    ctx.bezierCurveTo(wid * 0.86, -len * 0.8, wid, -len * 0.32, 0, 0);
+    ctx.fill();
+    // center crease
+    ctx.strokeStyle = "rgba(190,80,25,0.18)";
+    ctx.lineWidth = len * 0.02;
+    ctx.beginPath();
+    ctx.moveTo(0, -len * 0.1);
+    ctx.quadraticCurveTo(0, -len * 0.55, 0, -len * 0.92);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawScene(t, bloomP) {
+    // sky
+    var grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, "#fdf0dd");
+    grad.addColorStop(0.55, "#fbdcb6");
+    grad.addColorStop(0.82, "#f6c493");
+    grad.addColorStop(1, "#eda76f");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // sun halo behind flower head
+    var hx = W * 0.5, hy = H * 0.40;
+    var halo = ctx.createRadialGradient(hx, hy, 0, hx, hy, W * 0.55);
+    halo.addColorStop(0, "rgba(255,236,200,0.85)");
+    halo.addColorStop(0.5, "rgba(255,222,170,0.28)");
+    halo.addColorStop(1, "rgba(255,222,170,0)");
+    ctx.fillStyle = halo;
+    ctx.fillRect(0, 0, W, H);
+
+    // drifting motes
+    for (var mi = 0; mi < MOTES.length; mi++) {
+      var m = MOTES[mi];
+      var mx = (m.x + Math.sin(t * m.sp * 0.5 + m.ph) * 0.03) * W;
+      var my = (m.y + Math.sin(t * m.sp + m.ph) * 0.015) * H;
+      var tw = 0.35 + 0.3 * Math.sin(t * m.sp * 2 + m.ph);
+      ctx.fillStyle = "rgba(255,250,235," + tw + ")";
+      ctx.beginPath(); ctx.arc(mx, my, W * 0.004, 0, 6.29); ctx.fill();
+    }
+
+    // ground band
+    var gy = H * 0.86;
+    var ggrad = ctx.createLinearGradient(0, gy - H * 0.03, 0, H);
+    ggrad.addColorStop(0, "#c9b26a");
+    ggrad.addColorStop(1, "#a98d52");
+    ctx.fillStyle = ggrad;
+    ctx.beginPath();
+    ctx.moveTo(0, gy + H * 0.012);
+    for (var gx2 = 0; gx2 <= W; gx2 += 12)
+      ctx.lineTo(gx2, gy + Math.sin(gx2 / W * 5 + 1) * H * 0.008);
+    ctx.lineTo(W, H); ctx.lineTo(0, H);
+    ctx.closePath(); ctx.fill();
+
+    // grass blades
+    for (var gi = 0; gi < GRASS.length; gi++) {
+      var g2 = GRASS[gi];
+      var bx = g2.x * W, bh = g2.h * H;
+      var sway2 = Math.sin(t * 1.0472 + g2.ph) * bh * 0.16;
+      ctx.strokeStyle = "rgba(122,140,72,0.75)";
+      ctx.lineWidth = W * 0.006;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(bx, gy + H * 0.01);
+      ctx.quadraticCurveTo(bx + g2.lean * bh, gy - bh * 0.55,
+                           bx + g2.lean * bh + sway2, gy - bh);
+      ctx.stroke();
+    }
+
+    // ---- the flower ----
+    var sway = Math.sin(t * 0.5236) * 0.012;           // whole-plant sway, 12s period
+    var stemP = ease(bloomP * 4);                       // stem completes in first quarter
+    var headX = W * (0.5 + sway * stemP);
+    var baseY = gy;
+    var headY = baseY - H * 0.44 * stemP;
+
+    // stem
+    if (stemP > 0.02) {
+      ctx.strokeStyle = "#6f8f4e";
+      ctx.lineWidth = W * 0.016;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(W * 0.5, baseY);
+      ctx.quadraticCurveTo(W * (0.5 - sway * 0.6), baseY - (baseY - headY) * 0.55, headX, headY);
+      ctx.stroke();
+      // leaves sprout one by one as the stem passes their height
+      // [side, height-fraction, size]
+      var LEAVES = [[-1, 0.22, 0.085], [1, 0.36, 0.10], [-1, 0.52, 0.11], [1, 0.66, 0.095], [-1, 0.78, 0.075]];
+      for (var li = 0; li < LEAVES.length; li++) {
+        var L = LEAVES[li];
+        // each leaf pops once the stem tip has grown past its spot, with a quick unfurl
+        var lp = ease((stemP - L[1] - 0.06) / 0.16);
+        if (lp <= 0) continue;
+        var ly = baseY - (baseY - (baseY - H * 0.44)) * L[1];
+        var lx = W * 0.5 + (headX - W * 0.5) * L[1];
+        ctx.save();
+        ctx.translate(lx, ly);
+        ctx.scale(L[0], 1);   // mirror the whole leaf to its side of the stem
+        // unfurl: swings from hugging the stem to its resting angle, with tiny overshoot
+        var rest = 1.02 - 0.14 * Math.sin(t * 0.5236 + li);
+        var swing = rest * (lp < 1 ? (1.15 * lp - 0.15 * lp * lp) : 1);
+        ctx.rotate(swing);
+        ctx.fillStyle = li % 2 ? "#7a9b55" : "#6f9150";
+        ctx.beginPath();
+        var ll = W * L[2] * (0.35 + 0.65 * lp);
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(ll * 0.5, -ll * 0.42, ll, 0);
+        ctx.quadraticCurveTo(ll * 0.5, ll * 0.42, 0, 0);
+        ctx.fill();
+        // leaf midrib
+        ctx.strokeStyle = "rgba(70,95,45,0.5)";
+        ctx.lineWidth = W * 0.003;
+        ctx.beginPath();
+        ctx.moveTo(ll * 0.08, 0);
+        ctx.lineTo(ll * 0.85, 0);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    if (stemP > 0.85) {
+      var open = ease((bloomP - 0.25) / 0.75);          // petals unfurl after stem
+      var headR = W * 0.16 * (0.55 + 0.45 * open);
+
+      // outer ring
+      for (var pi = 0; pi < PETALS_OUT; pi++) {
+        var stag = ease((open * 1.25) - pi * 0.028);
+        if (stag <= 0) continue;
+        var baseA = (pi / PETALS_OUT) * Math.PI * 2 + sway * 2;
+        // closed: all petals point up (angle 0 = up); open: radial
+        var a = baseA * stag;
+        petal(headX, headY, a + Math.PI, headR * (0.5 + 0.75 * stag),
+              headR * 0.34 * (0.45 + 0.55 * stag), "#e05f1f", "#f8a05c");
+      }
+      // inner ring
+      for (var pj = 0; pj < PETALS_IN; pj++) {
+        var stag2 = ease((open * 1.25) - 0.14 - pj * 0.03);
+        if (stag2 <= 0) continue;
+        var baseA2 = ((pj + 0.5) / PETALS_IN) * Math.PI * 2 - sway * 1.5;
+        var a2 = baseA2 * stag2;
+        petal(headX, headY, a2 + Math.PI, headR * (0.42 + 0.5 * stag2),
+              headR * 0.3 * (0.5 + 0.5 * stag2), "#f47b3f", "#ffc98f");
+      }
+      // bud / center disc
+      var cr = headR * (open < 0.15 ? 0.34 : 0.34 + 0.16 * ease((open - 0.15) / 0.85));
+      var cgrad = ctx.createRadialGradient(headX, headY, cr * 0.1, headX, headY, cr);
+      cgrad.addColorStop(0, "#ffdd7a");
+      cgrad.addColorStop(1, "#e1a445");
+      ctx.fillStyle = cgrad;
+      ctx.beginPath(); ctx.arc(headX, headY, cr, 0, 6.29); ctx.fill();
+      // center dots (florets)
+      ctx.fillStyle = "rgba(160,110,30,0.55)";
+      for (var d = 0; d < 12; d++) {
+        var da = d * 2.4, dr = cr * 0.62 * Math.sqrt((d + 1) / 12);
+        ctx.beginPath();
+        ctx.arc(headX + Math.cos(da) * dr, headY + Math.sin(da) * dr, cr * 0.07, 0, 6.29);
+        ctx.fill();
+      }
+      // full-bloom sparkle
+      if (open > 0.97) {
+        var twk = Math.max(0, Math.sin(t * 2.0944));
+        if (twk > 0.6) {
+          var sa = (twk - 0.6) / 0.4;
+          var sx2 = headX + headR * 0.9, sy2 = headY - headR * 0.9;
+          ctx.strokeStyle = "rgba(255,252,240," + 0.8 * sa + ")";
+          ctx.lineWidth = W * 0.004; ctx.lineCap = "round";
+          var sl = W * 0.02 * (0.5 + sa);
+          ctx.beginPath();
+          ctx.moveTo(sx2 - sl, sy2); ctx.lineTo(sx2 + sl, sy2);
+          ctx.moveTo(sx2, sy2 - sl); ctx.lineTo(sx2, sy2 + sl);
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  // ---------- audio (synth; slots for real recordings can be laid in CapCut) ----------
+  var AC = null, waterGain = null, waterNodes = [];
+  function ensureAudio() {
+    if (AC) return;
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    waterGain = AC.createGain(); waterGain.gain.value = 0; waterGain.connect(AC.destination);
+    // babble: two band-passed noise loops + slow LFO wobble
+    for (var i = 0; i < 2; i++) {
+      var buf = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
+      var d = buf.getChannelData(0);
+      for (var n = 0; n < d.length; n++) d[n] = Math.random() * 2 - 1;
+      var src = AC.createBufferSource(); src.buffer = buf; src.loop = true;
+      var bp = AC.createBiquadFilter(); bp.type = "bandpass";
+      bp.frequency.value = i ? 420 : 1500; bp.Q.value = 0.7;
+      var g = AC.createGain(); g.gain.value = i ? 0.06 : 0.028;
+      var lfo = AC.createOscillator(); lfo.frequency.value = i ? 0.23 : 0.31;
+      var lg = AC.createGain(); lg.gain.value = i ? 260 : 500;
+      lfo.connect(lg); lg.connect(bp.frequency);
+      src.connect(bp); bp.connect(g); g.connect(waterGain);
+      src.start(); lfo.start();
+      waterNodes.push(src, lfo);
+    }
+  }
+  function setSound(mode) {
+    soundMode = mode;
+    document.getElementById("slabel").textContent = ["off", "meadow", "meadow+chime"][mode];
+    if (mode > 0) { ensureAudio(); AC.resume(); waterGain.gain.linearRampToValueAtTime(0.9, AC.currentTime + 0.8); }
+    else if (AC) waterGain.gain.linearRampToValueAtTime(0, AC.currentTime + 0.4);
+  }
+  function plip() { // distant bird chirp
+    if (!AC || soundMode < 1) return;
+    var n = 2 + Math.floor(Math.random() * 2);
+    for (var c = 0; c < n; c++) {
+      var o = AC.createOscillator(), g = AC.createGain();
+      var t0 = AC.currentTime + c * 0.14;
+      var f0 = 2100 + Math.random() * 900;
+      o.frequency.setValueAtTime(f0, t0);
+      o.frequency.exponentialRampToValueAtTime(f0 * 1.4, t0 + 0.05);
+      o.frequency.exponentialRampToValueAtTime(f0 * 0.9, t0 + 0.1);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.022, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
+      o.connect(g); g.connect(AC.destination); o.start(t0); o.stop(t0 + 0.13);
+    }
+  }
+  function chime() {
+    if (!AC || soundMode < 2) return;
+    [523.25, 659.25].forEach(function (f, i) {
+      var o = AC.createOscillator(), g = AC.createGain();
+      o.type = "sine"; o.frequency.value = f;
+      var t0 = AC.currentTime + i * 0.12;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.16, t0 + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 2.2);
+      o.connect(g); g.connect(AC.destination); o.start(t0); o.stop(t0 + 2.3);
+    });
+  }
+  var lastPlip = 0;
+
+  // ---------- text timeline ----------
+  function showText(id, cls, words, wordGap) {
+    var el = document.createElement("div");
+    el.className = "txt " + cls;
+    el.id = id;
+    words.split(" ").forEach(function (w, i) {
+      var sp = document.createElement("span");
+      sp.className = "w";
+      sp.textContent = w;
+      sp.style.animationDelay = (i * (wordGap || 0.14)) + "s";
+      el.appendChild(sp);
+      el.appendChild(document.createTextNode(" "));
+    });
+    txtLayer.appendChild(el);
+    requestAnimationFrame(function () {
+      el.querySelectorAll(".w").forEach(function (sp) { sp.classList.add("pop"); });
+    });
+    return el;
+  }
+  function killText(id) {
+    var el = document.getElementById(id);
+    if (el) { el.classList.add("fadeout"); setTimeout(function () { el.remove(); }, 750); }
+  }
+
+  // beats — variant 1/2 = MINIMAL (the bloom carries it); variant 4 = guided far-look
+  var LOOKAWAY_START = 11.5, LOOKAWAY_END = 19.5;
+  var BLOOM_T0 = 0.8, BLOOM_T1 = 19.1;
+  var BEATS_MIN = [
+    [0.2, function () { showText("t1", "big", "Watch this flower bloom.", 0.15); }],
+    [4.2, function () { killText("t1"); }],
+    [11.0, function () { showText("t2", "mid", "Let your shoulders drop.", 0.18); }],
+    [15.8, function () { killText("t2"); }],
+    [20.6, function () { mark.classList.add("on");
+      showText("t8", "low", "That was a snack.", 0.16); }]
+  ];
+  var BEATS_GUIDED = [
+    [0.2, function () { showText("t1", "big", "Watch this flower bloom.", 0.15); }],
+    [3.6, function () { killText("t1"); showText("t2", "mid", "Keep your eyes on the bud.", 0.13); }],
+    [7.0, function () { killText("t2");
+                        showText("w1", "whisper", "( screens hold your eyes close. time to let them go far )", 0.05); }],
+    [9.4, function () { killText("w1"); }],
+    [9.8, function () { showText("t4", "big", "Now look up from your phone.", 0.15); }],
+    [LOOKAWAY_START, function () {
+      killText("t4");
+      dim.classList.add("on"); arcWrap.classList.add("on");
+      showText("t5", "center dark", "Find the farthest thing around you.", 0.12);
+      showText("w2", "whisper dark", "( we\u2019ll wait. listen for the chime )", 0.05);
+    }],
+    [LOOKAWAY_END - 0.2, function () { chime(); }],
+    [LOOKAWAY_END, function () {
+      killText("t5"); killText("w2");
+      dim.classList.remove("on"); arcWrap.classList.remove("on");
+      showText("t6", "big", "Welcome back.", 0.2);
+    }],
+    [21.3, function () { killText("t6");
+      showText("t7", "mid", "It bloomed while you were gone.", 0.12); }],
+    [24.4, function () { killText("t7"); mark.classList.add("on");
+      showText("t8", "low", "Near, then far. That was a snack.", 0.12); }]
+  ];
+  var BEATS = BEATS_MIN;  // set per-variant in reset()
+  var END_PURE = 24.5;          // minimal pure
+  var END_GUIDED = 27.5;        // guided far-look (key 4)
+  var BEATS_CTA = [
+    [24.0, function () { killText("t8"); mark.classList.remove("on"); endcard.classList.add("on"); }]
+  ];
+  var END_CTA = 28.5;
+
+  // ---------- runner ----------
+  var startTs = null, fired = [], rafId = null;
+  var vlabel = document.getElementById("vlabel");
+
+  function labelVariant() {
+    vlabel.textContent = "variant " + variant + " — " +
+      ["", "MINIMAL pure (~24s — the bloom carries it; no CTA)",
+           "MINIMAL + CTA (dog end card + settlemoves.com)",
+           "seamless loop (full-bloom sway; record 0.0\u201312.0s exactly)",
+           "guided far-look (~27s — the look-away exercise cut)"][variant];
+  }
+
+  function reset() {
+    txtLayer.innerHTML = "";
+    dim.classList.remove("on");
+    arcWrap.classList.remove("on");
+    mark.classList.remove("on");
+    endcard.classList.remove("on");
+    arcFill.style.strokeDashoffset = ARC_LEN;
+    BEATS = (variant === 4) ? BEATS_GUIDED : BEATS_MIN;
+    fired = BEATS.map(function () { return false; });
+    firedCta = BEATS_CTA.map(function () { return false; });
+    startTs = performance.now() - seek * 1000;
+    labelVariant();
+    if (variant === 3) mark.classList.add("on");
+  }
+  var firedCta = [];
+
+  function frame(now) {
+    var t = (now - startTs) / 1000;
+
+    if (variant === 3) {
+      // loop: full bloom swaying forever, wordmark on, no beats (12.0s sway/sparkle cycle)
+      drawScene(t, 1);
+    } else {
+      var total = (variant === 2) ? END_CTA : (variant === 4) ? END_GUIDED : END_PURE;
+      if (t >= total) { t = total; }
+      // bloom progress: eased crawl on-screen, keeps going through the look-away
+      var bp = (t - BLOOM_T0) / (BLOOM_T1 - BLOOM_T0);
+      bp = bp < 0 ? 0 : bp > 1 ? 1 : bp;
+      drawScene(t, bp);
+
+      BEATS.forEach(function (b, i) { if (!fired[i] && t >= b[0]) { fired[i] = true; b[1](); } });
+      if (variant === 2)
+        BEATS_CTA.forEach(function (b, i) { if (!firedCta[i] && t >= b[0]) { firedCta[i] = true; b[1](); } });
+
+      // look-away progress arc (guided variant only)
+      if (variant === 4 && t >= LOOKAWAY_START && t <= LOOKAWAY_END) {
+        var pr = (t - LOOKAWAY_START) / (LOOKAWAY_END - LOOKAWAY_START);
+        arcFill.style.strokeDashoffset = ARC_LEN * (1 - pr);
+      }
+      if (t >= total && variant === 1) {
+        // hold final frame (recording tail)
+      }
+    }
+
+    // occasional plips
+    if (soundMode >= 1 && t - lastPlip > 1.6 + Math.random() * 2) { lastPlip = t; plip(); }
+
+    rafId = requestAnimationFrame(frame);
+  }
+
+  // ---------- controls ----------
+  var ctl = document.getElementById("ctl"), hideTimer = null;
+  function peekCtl() {
+    ctl.classList.add("show");
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(function () { ctl.classList.remove("show"); }, 2500);
+  }
+  window.addEventListener("mousemove", peekCtl);
+  window.addEventListener("keydown", function (e) {
+    ctl.classList.remove("show"); // any key instantly hides — keyboard-driven shoot
+    if (e.key === "1" || e.key === "2" || e.key === "3" || e.key === "4") { variant = +e.key; seek = 0; reset(); }
+    else if (e.key === "s" || e.key === "S") setSound((soundMode + 1) % 3);
+    else if (e.key === "r" || e.key === "R") { seek = 0; reset(); }
+  });
+
+  reset();
+  rafId = requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

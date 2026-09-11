@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SNACK·RX — Voice pack builder</title>
+<style>
+  :root{--bg:#F7F2E9;--card:#fff;--ink:#2D2A26;--ink2:#8A8378;--line:#EDE6D9;--accent:#F47D31}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font-family:"SF Pro Rounded",ui-rounded,-apple-system,"Segoe UI",sans-serif;display:flex;justify-content:center;min-height:100vh;-webkit-font-smoothing:antialiased}
+  .app{width:100%;max-width:520px;padding:36px 20px 60px}
+  h1{font-size:26px;font-weight:800;letter-spacing:-.5px;margin-bottom:8px}
+  p.sub{color:var(--ink2);font-size:14px;line-height:1.6;margin-bottom:22px}
+  .card{background:var(--card);border-radius:20px;padding:20px;margin-bottom:14px;box-shadow:0 1px 3px rgba(60,50,30,.05)}
+  .label{font-size:12.5px;color:var(--ink2);font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px}
+  input,select{width:100%;padding:13px;background:#faf7f1;border:1.5px solid var(--line);border-radius:12px;font-size:15px;font-family:inherit;color:var(--ink)}
+  input:focus,select:focus{outline:none;border-color:var(--accent)}
+  .btn{width:100%;padding:15px;border-radius:100px;border:none;cursor:pointer;font-size:15px;font-weight:700;background:var(--accent);color:#fff;margin-top:10px;font-family:inherit}
+  .btn:disabled{opacity:.4;cursor:default}
+  .btn.ghost{background:transparent;color:var(--ink2);font-weight:600}
+  .row{display:flex;gap:10px}.row>*{flex:1}
+  .bar{height:10px;background:#efe8da;border-radius:100px;overflow:hidden;margin:14px 0 8px}
+  .bar i{display:block;height:100%;width:0%;background:var(--accent);border-radius:100px;transition:width .3s}
+  .log{font-size:12.5px;color:var(--ink2);line-height:1.7;max-height:180px;overflow:auto;white-space:pre-wrap}
+  .ok{color:#2E8B72}.err{color:#c0392b}
+  .step{font-size:13px;font-weight:800;color:var(--accent);margin-bottom:4px}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Voice pack builder</h1>
+  <p class="sub">Generates every guide line as an MP3 with your HeyGen voice, saved into a <b>voice</b> folder next to <b>fitness-snack.html</b>. The app then uses your recordings automatically, with device TTS as fallback. Your API key stays in this page — it goes only to HeyGen.</p>
+
+  <div class="card">
+    <div class="step">STEP 1</div>
+    <div class="label">HeyGen API key</div>
+    <input type="password" id="key" placeholder="Paste your API token (HeyGen → Settings → API)">
+    <button class="btn" id="connect">Connect & load voices</button>
+  </div>
+
+  <div class="card" id="voicecard" style="display:none">
+    <div class="step">STEP 2</div>
+    <div class="label">Pick a voice</div>
+    <select id="voice"></select>
+    <div class="row">
+      <button class="btn ghost" id="preview">▶ Preview a line</button>
+    </div>
+    <div class="label" style="margin-top:14px">Speaking speed — 0.9 reads calm</div>
+    <input type="range" id="speed" min="0.7" max="1.1" step="0.05" value="0.9" style="padding:0">
+  </div>
+
+  <div class="card" id="gencard" style="display:none">
+    <div class="step">STEP 3</div>
+    <div class="label">Generate</div>
+    <p class="sub" style="margin-bottom:4px">Pick the folder that contains <b>fitness-snack.html</b>. A <b>voice</b> subfolder is created automatically. Already-generated lines are skipped, so you can re-run safely.</p>
+    <button class="btn" id="go">Choose folder & generate all lines</button>
+    <div class="bar"><i id="fill"></i></div>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+<script>
+const LINES = {
+  "voice_on": "Voice on. I'll guide you through.",
+  "intro_racing": "Let's give your mind one job. Your target's on screen... press begin when you're ready.",
+  "intro_wired": "You've got fuel to burn... let's burn it. Press begin when you're ready.",
+  "intro_low": "We're not chasing calm — we're chasing a spark. Whenever you're ready.",
+  "intro_tense": "Let's discharge it now... and settle right after. Whenever you're ready.",
+  "intro_winddown": "Let's downshift, not rev up. Press begin... and follow my voice.",
+  "intro_generic": "Your minute's ready. Press begin whenever you are.",
+  "intro_calm": "When you're ready... press begin, and follow my voice.",
+  "tgt_count": "Count every one — out loud, or in your head.",
+  "tp_4": "Your target — four.",
+  "tp_5": "Your target — five.",
+  "tp_6": "Your target — six.",
+  "tp_7": "Your target — seven.",
+  "tp_8": "Your target — eight.",
+  "tp_9": "Your target — nine.",
+  "tp_10": "Your target — ten.",
+  "tp_12": "Your target — twelve.",
+  "tp_14": "Your target — fourteen.",
+  "tp_16": "Your target — sixteen.",
+  "tp_18": "Your target — eighteen.",
+  "tp_20": "Your target — twenty.",
+  "tp_25": "Your target — twenty-five.",
+  "tp_30": "Your target — thirty.",
+  "tp_35": "Your target — thirty-five.",
+  "tp_40": "Your target — forty.",
+  "tp_45": "Your target — forty-five.",
+  "tp_50": "Your target — fifty.",
+  "tp_60": "Your target — sixty.",
+  "tp_70": "Your target — seventy.",
+  "tp_80": "Your target — eighty.",
+  "tp_90": "Your target — ninety.",
+  "tp_100": "Your target — one hundred.",
+  "tp_120": "Your target — one hundred twenty.",
+  "tp_150": "Your target — one hundred fifty.",
+  "tp_200": "Your target — two hundred.",
+  "tp_250": "Your target — two hundred fifty.",
+  "tp_300": "Your target — three hundred.",
+  "unit_reps": "reps",
+  "unit_cycles": "cycles",
+  "unit_taps": "taps",
+  "unit_rolls": "rolls",
+  "unit_folds": "folds",
+  "unit_circles": "circles",
+  "unit_extensions": "extensions",
+  "unit_pinches": "pinches",
+  "res_good": "Nicely done. Your anxiety eased in one minute — that's the whole idea.",
+  "res_zero": "You showed up. No shift yet... the settling often lands a few minutes after. That still counts.",
+  "res_neg": "You showed up. Tougher this time — showing up is the habit that matters most.",
+  "br_in": "Breathe in",
+  "br_hold": "Hold",
+  "br_out": "Breathe out slowly",
+  "br_nose": "Inhale through your nose",
+  "br_in2": "A second short inhale",
+  "br_long": "Loooong exhale",
+  "st_shoulders": "Roll your shoulders back... slow",
+  "st_right": "Ear toward your right shoulder",
+  "st_left": "Ear toward your left shoulder",
+  "st_reach": "Reach up tall... then fold forward",
+  "st_hug": "Hug your knees... breathe slow",
+  "cue_racing": "Every rep is a number to count. That's the loop losing its grip.",
+  "cue_wired": "This is the buzzing energy leaving your body — you're spending it, not storing it.",
+  "cue_low": "Movement is the fastest lever on a flat mood. You're pulling it right now.",
+  "cue_tense": "Shoulders down. The calm lands right after you stop — that's the mechanism, not a bonus.",
+  "ms_heelpat_0": "Left heel up... down. Right heel... then both together. Count each full cycle.",
+  "ms_heelpat_10": "Keep the order — left, right, both. That's the pattern.",
+  "ms_heelpat_22": "The looping thought needs the same bandwidth you're using to count. It can't have both.",
+  "ms_heelpat_34": "Lost the pattern? Start again at one... the counting is the exercise.",
+  "ms_heelpat_46": "Toes stay planted... just the heels. Steady.",
+  "ms_heelpat_56": "Finish the cycle you're in... then let it go.",
+  "ms_sqcount_0": "Slow squats... and count each one out. One number per rep.",
+  "ms_sqcount_10": "Keep the count exact. That's the anchor.",
+  "ms_sqcount_22": "The looping thought needs the same bandwidth you're using to count... it can't have both.",
+  "ms_sqcount_34": "Lost count? Start again at one. The counting is the exercise.",
+  "ms_sqcount_46": "Steady rhythm... almost there.",
+  "ms_sqcount_56": "Last few... strong finish.",
+  "ms_drums_0": "Toes planted... now drum your heels, fast. A sprint under the desk.",
+  "ms_drums_10": "Quicker than comfortable. This is the buzz finding an exit.",
+  "ms_drums_22": "That jittery energy is adrenaline... your legs are burning it as fuel right now.",
+  "ms_drums_34": "Halfway. Heels higher... keep it quiet, keep it quick.",
+  "ms_drums_46": "Nobody can see this. Empty the energy anyway.",
+  "ms_drums_56": "Last seconds... sprint.",
+  "ms_jacks_0": "You already know this one. Arms and legs wide... go.",
+  "ms_jacks_10": "Heart rate's climbing. This is the buzz finding an exit.",
+  "ms_jacks_22": "That jittery energy is adrenaline... your muscles are burning it as fuel right now.",
+  "ms_jacks_34": "Halfway. Keep the arms honest — all the way up.",
+  "ms_jacks_46": "Short bursts like this reliably drop measured anxiety. Keep going.",
+  "ms_jacks_56": "Empty the tank.",
+  "ms_calfpump_0": "Sit tall... crown of the head up. Slow heel raises, and breathe with them.",
+  "ms_calfpump_10": "Each raise pumps pooled blood back into circulation. The calf is your second heart.",
+  "ms_calfpump_22": "Inhale as you rise... exhale as you lower.",
+  "ms_calfpump_34": "Notice the posture. Tall and open is the opposite shape of flat.",
+  "ms_calfpump_46": "A little quicker now if you like... we're chasing a spark, not a workout.",
+  "ms_calfpump_56": "Last few... nice.",
+  "ms_march_0": "Easy rhythm. Knees up to hip height... that's all this is.",
+  "ms_march_10": "Heart rate's lifting gently — enough to start clearing the fog.",
+  "ms_march_22": "Movement is the fastest lever on a flat mood... you're pulling it.",
+  "ms_march_34": "Halfway. Let the arms swing... a little taller through the spine.",
+  "ms_march_46": "Notice anything lifting? Even five percent counts.",
+  "ms_march_56": "Last few steps... nice and steady.",
+  "ms_rolls_0": "Shoulders up to your ears... roll them back, and let them drop. Slow.",
+  "ms_rolls_10": "Each roll ends lower than it started. That drop is the exercise.",
+  "ms_rolls_22": "You've been braced without noticing. This is the un-bracing.",
+  "ms_rolls_34": "Halfway... jaw loose, breath slow. Keep rolling.",
+  "ms_rolls_46": "Notice the space between your shoulders and your ears now.",
+  "ms_rolls_56": "Last rolls... let them land heavy.",
+  "ms_fold_0": "Soft knees... chin down, and roll forward, one vertebra at a time.",
+  "ms_fold_10": "Hang heavy. Let the head and arms just... dangle.",
+  "ms_fold_22": "You've been braced without noticing. Gravity is doing the un-bracing.",
+  "ms_fold_34": "Sway a little if it feels good... then roll back up, slow.",
+  "ms_fold_46": "Shoulders land away from your ears... and fold again.",
+  "ms_fold_56": "Last one... come up slow, and let everything settle.",
+  "ms_legext_0": "Right leg out straight... squeeze the thigh hard. Hold.",
+  "ms_legext_10": "Lower it slow... don't let it touch the floor. Switch legs.",
+  "ms_legext_22": "Count each extension. The squeeze and the count are the whole job.",
+  "ms_legext_34": "That loop in your head needs the bandwidth you're counting with.",
+  "ms_legext_46": "Slow is the point... strong squeeze at the top.",
+  "ms_legext_56": "Finish this one... then let it go.",
+  "ms_ankles_0": "Feet off the floor... slow circles from the ankles.",
+  "ms_ankles_10": "Smooth and round... both directions work.",
+  "ms_ankles_22": "This flushes the restless energy pooling in your lower legs.",
+  "ms_ankles_34": "Halfway. Reverse the direction.",
+  "ms_ankles_46": "Keep the circles slow... let the rest of you be still.",
+  "ms_ankles_56": "Last circles... then feet down, settled.",
+  "ms_pinch_0": "Pull your shoulder blades back and down... squeeze them together. Hold.",
+  "ms_pinch_10": "Release. Feel the chest open where you were hunched.",
+  "ms_pinch_22": "This is the exact opposite of screen posture... that's why it works.",
+  "ms_pinch_34": "Again — back and down, away from the ears. Hold it.",
+  "ms_pinch_46": "Notice how much taller you're sitting now.",
+  "ms_pinch_56": "One last pinch... then let everything drop.",
+  "ms_gen_0": "Go. Count every one — that's the anchor.",
+  "ms_gen_8": "Heart rate's climbing... blood flow to working muscle is already up several-fold.",
+  "ms_gen_18": "A pounding heart here isn't panic. It's the dose working.",
+  "ms_gen_28": "Halfway. Your muscles are burning off circulating adrenaline right now.",
+  "ms_gen_40": "Single short bouts of movement reliably lower measured state anxiety.",
+  "ms_gen_50": "Nearly there... steady rhythm.",
+  "ms_gen_56": "Final seconds. Empty the tank."
+};
+const $ = id => document.getElementById(id);
+const log = (m, cls) => { const d = document.createElement("div"); if (cls) d.className = cls; d.textContent = m; $("log").prepend(d); };
+const API = "https://api.heygen.com";
+let KEY = "", VOICES = [];
+
+async function api(path, opts) {
+  const r = await fetch(API + path, { ...opts, headers: { "X-Api-Key": KEY, "Content-Type": "application/json", ...(opts && opts.headers) } });
+  if (!r.ok) throw new Error("HTTP " + r.status + " on " + path + " — " + (await r.text()).slice(0, 160));
+  return r.json();
+}
+
+$("connect").onclick = async () => {
+  KEY = $("key").value.trim();
+  if (!KEY) return alert("Paste your API key first.");
+  $("connect").disabled = true; $("connect").textContent = "Connecting…";
+  try {
+    let data;
+    try { data = await api("/v3/voices?engine=starfish"); }
+    catch (e) { data = await api("/v2/voices"); }
+    const list = data.data?.voices || data.voices || data.data || [];
+    VOICES = list.filter(v => /^en/i.test(v.language || v.locale || "en"));
+    if (!VOICES.length) VOICES = list;
+    $("voice").innerHTML = VOICES.map(v =>
+      "<option value=\"" + (v.voice_id || v.id) + "\">" + (v.name || v.display_name || v.voice_id) + (v.gender ? " · " + v.gender : "") + "</option>").join("");
+    $("voicecard").style.display = "block"; $("gencard").style.display = "block";
+    $("connect").textContent = "Connected ✓";
+    log("Loaded " + VOICES.length + " voices.", "ok");
+  } catch (e) {
+    $("connect").disabled = false; $("connect").textContent = "Connect & load voices";
+    alert("Could not connect: " + e.message);
+  }
+};
+
+async function tts(text) {
+  const body = { text, voice_id: $("voice").value, speed: +$("speed").value };
+  const data = await api("/v3/voices/speech", { method: "POST", body: JSON.stringify(body) });
+  const url = data.data?.audio_url || data.audio_url;
+  if (!url) throw new Error("no audio_url in response");
+  const audio = await fetch(url);
+  if (!audio.ok) throw new Error("audio fetch HTTP " + audio.status);
+  return audio.arrayBuffer();
+}
+
+$("preview").onclick = async () => {
+  $("preview").disabled = true; $("preview").textContent = "Generating…";
+  try {
+    const buf = await tts(LINES.intro_racing);
+    new Audio(URL.createObjectURL(new Blob([buf], { type: "audio/mpeg" }))).play();
+    log("Preview OK — this is your guide voice.", "ok");
+  } catch (e) { log("Preview failed: " + e.message, "err"); }
+  $("preview").disabled = false; $("preview").textContent = "▶ Preview a line";
+};
+
+$("go").onclick = async () => {
+  let root;
+  try { root = await window.showDirectoryPicker({ mode: "readwrite" }); }
+  catch (e) { return; }
+  const dir = await root.getDirectoryHandle("voice", { create: true });
+  const ids = Object.keys(LINES);
+  let done = 0, skipped = 0, failed = 0;
+  $("go").disabled = true;
+  for (const id of ids) {
+    try { await dir.getFileHandle(id + ".mp3"); skipped++; }
+    catch (_) {
+      try {
+        const buf = await tts(LINES[id]);
+        const fh = await dir.getFileHandle(id + ".mp3", { create: true });
+        const w = await fh.createWritable(); await w.write(buf); await w.close();
+        done++; log("✓ " + id, "ok");
+        await new Promise(r => setTimeout(r, 350));
+      } catch (e) { failed++; log("✗ " + id + " — " + e.message, "err"); }
+    }
+    $("fill").style.width = Math.round((done + skipped + failed) / ids.length * 100) + "%";
+  }
+  $("go").disabled = false;
+  log("Done. " + done + " generated, " + skipped + " already existed" + (failed ? ", " + failed + " FAILED (re-run to retry)" : "") + ".", failed ? "err" : "ok");
+  if (!failed) log("Open fitness-snack.html — your voice is live.", "ok");
+};
+</script>
+</body>
+</html>

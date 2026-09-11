@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SNACK·RX — Record your voice</title>
+<style>
+  :root{--bg:#F7F2E9;--card:#fff;--ink:#2D2A26;--ink2:#8A8378;--line:#EDE6D9;--accent:#F47D31;--green:#2E8B72}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font-family:"SF Pro Rounded",ui-rounded,-apple-system,"Segoe UI",sans-serif;display:flex;justify-content:center;min-height:100vh;-webkit-font-smoothing:antialiased}
+  .app{width:100%;max-width:560px;padding:36px 20px 60px;text-align:center}
+  h1{font-size:26px;font-weight:800;letter-spacing:-.5px;margin-bottom:8px}
+  p.sub{color:var(--ink2);font-size:14px;line-height:1.6;margin-bottom:22px}
+  .card{background:var(--card);border-radius:22px;padding:26px 22px;margin-bottom:14px;box-shadow:0 1px 3px rgba(60,50,30,.05)}
+  .count{font-size:12.5px;color:var(--ink2);font-weight:700;letter-spacing:.4px;text-transform:uppercase;margin-bottom:14px}
+  .prompt{font-size:23px;font-weight:700;line-height:1.45;min-height:100px;display:flex;align-items:center;justify-content:center}
+  .hint{font-size:12.5px;color:var(--ink2);margin-top:10px;min-height:18px}
+  .btn{padding:15px 28px;border-radius:100px;border:none;cursor:pointer;font-size:15px;font-weight:700;background:var(--accent);color:#fff;margin:6px 4px 0;font-family:inherit}
+  .btn.rec{background:#c0392b}
+  .btn.ok{background:var(--green)}
+  .btn.ghost{background:transparent;color:var(--ink2);font-weight:600}
+  .btn:disabled{opacity:.35;cursor:default}
+  .bar{height:10px;background:#efe8da;border-radius:100px;overflow:hidden;margin:18px 0 6px}
+  .bar i{display:block;height:100%;width:0%;background:var(--green);border-radius:100px;transition:width .3s}
+  .pulse{display:inline-block;width:10px;height:10px;border-radius:50%;background:#c0392b;margin-right:8px;animation:pp 1s ease-in-out infinite}
+  @keyframes pp{0%,100%{opacity:1}50%{opacity:.2}}
+  .exp{border-top:1.5px solid var(--line);margin-top:18px;padding-top:14px}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Record your guide voice <span style="font-size:13px;color:#F47D31;vertical-align:middle">v4 · one-breath targets</span></h1>
+  <p class="sub">Read each line calm and unhurried — the "..." marks are pauses. Number lines like <b>"58 reps"</b> are one natural phrase: "fifty-eight reps", one breath. Use the <b>spacebar</b> to start and stop recording (no trackpad clicks near the mic), and every take is auto-cleaned: silence and stray clicks trimmed, edges faded. Recordings are kept safely in this browser, so you can close the page and pick up where you left off. When you are ready, export <b>voice-pack.zip</b> and unzip it next to <b>fitness-snack.html</b> so a <b>voice</b> folder sits beside it.</p>
+  <div class="card">
+    <button class="btn" id="start">Start recording</button>
+    <div class="hint" id="starthint"></div>
+    <div id="studio" style="display:none">
+      <div class="count" id="count"></div>
+      <div class="prompt" id="prompt"></div>
+      <div class="hint" id="hint"></div>
+      <div style="margin-top:16px">
+        <button class="btn" id="recbtn">● Record</button>
+        <button class="btn ghost" id="playbtn" disabled>▶ Listen</button>
+        <button class="btn ok" id="savebtn" disabled>Save & next</button>
+      </div>
+      <div>
+        <button class="btn ghost" id="prevbtn">‹ Back</button>
+        <button class="btn ghost" id="skipbtn">Skip ›</button>
+        <button class="btn ghost" id="redobtn" style="display:none">▶ Hear saved take</button>
+      </div>
+      <div class="bar"><i id="fill"></i></div>
+      <div class="hint" id="progress"></div>
+    </div>
+    <div class="exp">
+      <button class="btn ok" id="export" disabled>⬇ Export voice-pack.zip</button>
+      <div class="hint" id="exphint"></div>
+    </div>
+  </div>
+</div>
+<script>
+const LINES = {
+  "voice_on": "Voice on. I'll guide you through.",
+  "intro_racing": "Let's give your mind one job. Your target's on screen... press begin when you're ready.",
+  "intro_wired": "You've got fuel to burn... let's burn it. Press begin when you're ready.",
+  "intro_low": "We're not chasing calm — we're chasing a spark. Whenever you're ready.",
+  "intro_tense": "Let's discharge it now... and settle right after. Whenever you're ready.",
+  "intro_winddown": "Let's downshift, not rev up. Press begin... and follow my voice.",
+  "intro_generic": "Your minute's ready. Press begin whenever you are.",
+  "intro_calm": "When you're ready... press begin, and follow my voice.",
+  "tgt_count": "Count every one — out loud, or in your head.",
+  "res_good": "Nicely done. Your anxiety eased in one minute — that's the whole idea.",
+  "res_zero": "You showed up. No shift yet... the settling often lands a few minutes after. A slow minute of breathing can help it along.",
+  "res_neg": "You showed up. One snack doesn't always land — let's try a breathing exercise. A long exhale reaches what movement sometimes can't.",
+  "br_in": "Breathe in",
+  "br_hold": "Hold",
+  "br_out": "Breathe out slowly",
+  "br_nose": "Inhale through your nose",
+  "br_in2": "A second short inhale",
+  "br_long": "Loooong exhale",
+  "st_shoulders": "Roll your shoulders back... slow",
+  "st_right": "Ear toward your right shoulder",
+  "st_left": "Ear toward your left shoulder",
+  "st_reach": "Reach up tall... then fold forward",
+  "st_hug": "Hug your knees... breathe slow",
+  "cue_racing": "Every rep is a number to count. That's the loop losing its grip.",
+  "cue_wired": "This is the buzzing energy leaving your body — you're spending it, not storing it.",
+  "cue_low": "Movement is the fastest lever on a flat mood. You're pulling it right now.",
+  "cue_tense": "Shoulders down. The calm lands right after you stop — that's the mechanism, not a bonus.",
+  "ms_heelpat_0": "Left heel up... down. Right heel... then both together. Count each full cycle.",
+  "ms_heelpat_10": "Keep the order — left, right, both. That's the pattern.",
+  "ms_heelpat_22": "The looping thought needs the same bandwidth you're using to count. It can't have both.",
+  "ms_heelpat_34": "Lost the pattern? Start again at one... the counting is the exercise.",
+  "ms_heelpat_46": "Toes stay planted... just the heels. Steady.",
+  "ms_heelpat_56": "Finish the cycle you're in... then let it go.",
+  "ms_sqcount_0": "Slow squats... and count each one out. One number per rep.",
+  "ms_sqcount_10": "Keep the count exact. That's the anchor.",
+  "ms_sqcount_22": "The looping thought needs the same bandwidth you're using to count... it can't have both.",
+  "ms_sqcount_34": "Lost count? Start again at one. The counting is the exercise.",
+  "ms_sqcount_46": "Steady rhythm... almost there.",
+  "ms_sqcount_56": "Last few... strong finish.",
+  "ms_drums_0": "Toes planted... now drum your heels, fast. A sprint under the desk.",
+  "ms_drums_10": "Quicker than comfortable. This is the buzz finding an exit.",
+  "ms_drums_22": "That jittery energy is adrenaline... your legs are burning it as fuel right now.",
+  "ms_drums_34": "Halfway. Heels higher... keep it quiet, keep it quick.",
+  "ms_drums_46": "Nobody can see this. Empty the energy anyway.",
+  "ms_drums_56": "Last seconds... sprint.",
+  "ms_jacks_0": "You already know this one. Arms and legs wide... go.",
+  "ms_jacks_10": "Heart rate's climbing. This is the buzz finding an exit.",
+  "ms_jacks_22": "That jittery energy is adrenaline... your muscles are burning it as fuel right now.",
+  "ms_jacks_34": "Halfway. Keep the arms honest — all the way up.",
+  "ms_jacks_46": "Short bursts like this reliably drop measured anxiety. Keep going.",
+  "ms_jacks_56": "Empty the tank.",
+  "ms_calfpump_0": "Sit tall... crown of the head up. Slow heel raises, and breathe with them.",
+  "ms_calfpump_10": "Each raise pumps pooled blood back into circulation. The calf is your second heart.",
+  "ms_calfpump_22": "Inhale as you rise... exhale as you lower.",
+  "ms_calfpump_34": "Notice the posture. Tall and open is the opposite shape of flat.",
+  "ms_calfpump_46": "A little quicker now if you like... we're chasing a spark, not a workout.",
+  "ms_calfpump_56": "Last few... nice.",
+  "ms_march_0": "Easy rhythm. Knees up to hip height... that's all this is.",
+  "ms_march_10": "Heart rate's lifting gently — enough to start clearing the fog.",
+  "ms_march_22": "Movement is the fastest lever on a flat mood... you're pulling it.",
+  "ms_march_34": "Halfway. Let the arms swing... a little taller through the spine.",
+  "ms_march_46": "Notice anything lifting? Even five percent counts.",
+  "ms_march_56": "Last few steps... nice and steady.",
+  "ms_rolls_0": "Shoulders up to your ears... roll them back, and let them drop. Slow.",
+  "ms_rolls_10": "Each roll ends lower than it started. That drop is the exercise.",
+  "ms_rolls_22": "You've been braced without noticing. This is the un-bracing.",
+  "ms_rolls_34": "Halfway... jaw loose, breath slow. Keep rolling.",
+  "ms_rolls_46": "Notice the space between your shoulders and your ears now.",
+  "ms_rolls_56": "Last rolls... let them land heavy.",
+  "ms_fold_0": "Soft knees... chin down, and roll forward, one vertebra at a time.",
+  "ms_fold_10": "Hang heavy. Let the head and arms just... dangle.",
+  "ms_fold_22": "You've been braced without noticing. Gravity is doing the un-bracing.",
+  "ms_fold_34": "Sway a little if it feels good... then roll back up, slow.",
+  "ms_fold_46": "Shoulders land away from your ears... and fold again.",
+  "ms_fold_56": "Last one... come up slow, and let everything settle.",
+  "ms_legext_0": "Right leg out straight... squeeze the thigh hard. Hold.",
+  "ms_legext_10": "Lower it slow... don't let it touch the floor. Switch legs.",
+  "ms_legext_22": "Count each extension. The squeeze and the count are the whole job.",
+  "ms_legext_34": "That loop in your head needs the bandwidth you're counting with.",
+  "ms_legext_46": "Slow is the point... strong squeeze at the top.",
+  "ms_legext_56": "Finish this one... then let it go.",
+  "ms_ankles_0": "Feet off the floor... slow circles from the ankles.",
+  "ms_ankles_10": "Smooth and round... both directions work.",
+  "ms_ankles_22": "This flushes the restless energy pooling in your lower legs.",
+  "ms_ankles_34": "Halfway. Reverse the direction.",
+  "ms_ankles_46": "Keep the circles slow... let the rest of you be still.",
+  "ms_ankles_56": "Last circles... then feet down, settled.",
+  "ms_pinch_0": "Pull your shoulder blades back and down... squeeze them together. Hold.",
+  "ms_pinch_10": "Release. Feel the chest open where you were hunched.",
+  "ms_pinch_22": "This is the exact opposite of screen posture... that's why it works.",
+  "ms_pinch_34": "Again — back and down, away from the ears. Hold it.",
+  "ms_pinch_46": "Notice how much taller you're sitting now.",
+  "ms_pinch_56": "One last pinch... then let everything drop.",
+  "ms_gen_0": "Go. Count every one — that's the anchor.",
+  "ms_gen_8": "Heart rate's climbing... blood flow to working muscle is already up several-fold.",
+  "ms_gen_18": "A pounding heart here isn't panic. It's the dose working.",
+  "ms_gen_28": "Halfway. Your muscles are burning off circulating adrenaline right now.",
+  "ms_gen_40": "Single short bouts of movement reliably lower measured state anxiety.",
+  "ms_gen_50": "Nearly there... steady rhythm.",
+  "ms_gen_56": "Final seconds. Empty the tank.",
+  "tgt_8_circles": "8 circles",
+  "tgt_9_circles": "9 circles",
+  "tgt_10_circles": "10 circles",
+  "tgt_12_circles": "12 circles",
+  "tgt_14_circles": "14 circles",
+  "tgt_16_circles": "16 circles",
+  "tgt_18_circles": "18 circles",
+  "tgt_20_circles": "20 circles",
+  "tgt_25_circles": "25 circles",
+  "tgt_30_circles": "30 circles",
+  "tgt_35_circles": "35 circles",
+  "tgt_40_circles": "40 circles",
+  "tgt_45_circles": "45 circles",
+  "tgt_50_circles": "50 circles",
+  "tgt_60_circles": "60 circles",
+  "tgt_4_cycles": "4 cycles",
+  "tgt_5_cycles": "5 cycles",
+  "tgt_6_cycles": "6 cycles",
+  "tgt_7_cycles": "7 cycles",
+  "tgt_8_cycles": "8 cycles",
+  "tgt_9_cycles": "9 cycles",
+  "tgt_10_cycles": "10 cycles",
+  "tgt_12_cycles": "12 cycles",
+  "tgt_14_cycles": "14 cycles",
+  "tgt_16_cycles": "16 cycles",
+  "tgt_18_cycles": "18 cycles",
+  "tgt_20_cycles": "20 cycles",
+  "tgt_25_cycles": "25 cycles",
+  "tgt_30_cycles": "30 cycles",
+  "tgt_35_cycles": "35 cycles",
+  "tgt_4_extensions": "4 extensions",
+  "tgt_5_extensions": "5 extensions",
+  "tgt_6_extensions": "6 extensions",
+  "tgt_7_extensions": "7 extensions",
+  "tgt_8_extensions": "8 extensions",
+  "tgt_9_extensions": "9 extensions",
+  "tgt_10_extensions": "10 extensions",
+  "tgt_12_extensions": "12 extensions",
+  "tgt_4_folds": "4 folds",
+  "tgt_5_folds": "5 folds",
+  "tgt_6_folds": "6 folds",
+  "tgt_7_folds": "7 folds",
+  "tgt_8_folds": "8 folds",
+  "tgt_9_folds": "9 folds",
+  "tgt_10_folds": "10 folds",
+  "tgt_12_folds": "12 folds",
+  "tgt_14_folds": "14 folds",
+  "tgt_16_folds": "16 folds",
+  "tgt_4_pinches": "4 pinches",
+  "tgt_5_pinches": "5 pinches",
+  "tgt_6_pinches": "6 pinches",
+  "tgt_7_pinches": "7 pinches",
+  "tgt_8_pinches": "8 pinches",
+  "tgt_9_pinches": "9 pinches",
+  "tgt_10_pinches": "10 pinches",
+  "tgt_12_pinches": "12 pinches",
+  "tgt_14_pinches": "14 pinches",
+  "tgt_16_pinches": "16 pinches",
+  "tgt_9_reps": "9 reps",
+  "tgt_10_reps": "10 reps",
+  "tgt_12_reps": "12 reps",
+  "tgt_14_reps": "14 reps",
+  "tgt_16_reps": "16 reps",
+  "tgt_18_reps": "18 reps",
+  "tgt_20_reps": "20 reps",
+  "tgt_25_reps": "25 reps",
+  "tgt_30_reps": "30 reps",
+  "tgt_35_reps": "35 reps",
+  "tgt_40_reps": "40 reps",
+  "tgt_45_reps": "45 reps",
+  "tgt_50_reps": "50 reps",
+  "tgt_60_reps": "60 reps",
+  "tgt_70_reps": "70 reps",
+  "tgt_80_reps": "80 reps",
+  "tgt_90_reps": "90 reps",
+  "tgt_100_reps": "100 reps",
+  "tgt_120_reps": "120 reps",
+  "tgt_150_reps": "150 reps",
+  "tgt_200_reps": "200 reps",
+  "tgt_4_rolls": "4 rolls",
+  "tgt_5_rolls": "5 rolls",
+  "tgt_6_rolls": "6 rolls",
+  "tgt_7_rolls": "7 rolls",
+  "tgt_8_rolls": "8 rolls",
+  "tgt_9_rolls": "9 rolls",
+  "tgt_10_rolls": "10 rolls",
+  "tgt_12_rolls": "12 rolls",
+  "tgt_14_rolls": "14 rolls",
+  "tgt_16_rolls": "16 rolls",
+  "tgt_18_rolls": "18 rolls",
+  "tgt_20_rolls": "20 rolls",
+  "tgt_25_rolls": "25 rolls",
+  "tgt_30_rolls": "30 rolls",
+  "tgt_40_taps": "40 taps",
+  "tgt_45_taps": "45 taps",
+  "tgt_50_taps": "50 taps",
+  "tgt_60_taps": "60 taps",
+  "tgt_70_taps": "70 taps",
+  "tgt_80_taps": "80 taps",
+  "tgt_90_taps": "90 taps",
+  "tgt_100_taps": "100 taps",
+  "tgt_120_taps": "120 taps",
+  "tgt_150_taps": "150 taps",
+  "tgt_200_taps": "200 taps",
+  "tgt_250_taps": "250 taps",
+  "tgt_300_taps": "300 taps"
+};
+const IDS = Object.keys(LINES);
+const $ = id => document.getElementById(id);
+let db, stream, mediaRec, chunks = [], blob = null, queue = [], idx = 0;
+
+/* ---- IndexedDB: recordings survive closing the page ---- */
+function openDB() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open("snackrx-voice-v4", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("takes");
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+const putTake = (id, b) => new Promise((res, rej) => { const t = db.transaction("takes", "readwrite"); t.objectStore("takes").put(b, id); t.oncomplete = res; t.onerror = () => rej(t.error); });
+const getTake = id => new Promise((res) => { const rq = db.transaction("takes").objectStore("takes").get(id); rq.onsuccess = () => res(rq.result || null); rq.onerror = () => res(null); });
+const allKeys = () => new Promise((res) => { const rq = db.transaction("takes").objectStore("takes").getAllKeys(); rq.onsuccess = () => res(rq.result || []); rq.onerror = () => res([]); });
+
+async function refreshExport() {
+  const keys = (await allKeys()).filter(k => k in LINES);
+  $("export").disabled = keys.length === 0;
+  $("exphint").textContent = keys.length
+    ? keys.length + " of " + IDS.length + " lines recorded — export any time; missing lines fall back to a device voice."
+    : "Record at least one line to export.";
+  return keys;
+}
+
+$("start").onclick = async () => {
+  try { db = db || await openDB(); } catch (e) { return $("starthint").textContent = "Browser storage unavailable: " + e.message; }
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); }
+  catch (e) { return $("starthint").textContent = "Microphone blocked — click the mic icon in the address bar, allow access, then try again."; }
+  // full list, always navigable — start at the first line without a take
+  const done = new Set(await allKeys());
+  queue = IDS.slice();
+  idx = Math.max(0, queue.findIndex(id => !done.has(id)));
+  if (queue.every(id => done.has(id))) idx = 0;
+  $("start").style.display = "none"; $("starthint").textContent = "";
+  $("studio").style.display = "block";
+  showLine();
+};
+
+async function showLine() {
+  blob = null;
+  $("playbtn").disabled = true; $("savebtn").disabled = true;
+  $("recbtn").disabled = false; $("skipbtn").disabled = false;
+  $("recbtn").textContent = "● Record"; $("recbtn").className = "btn";
+  const existing = await getTake(queue[idx]);
+  $("count").textContent = "Line " + (idx + 1) + " of " + IDS.length + "  ·  " + queue[idx] +
+    (existing ? "  ·  ✓ SAVED" : "");
+  $("prompt").textContent = LINES[queue[idx]];
+  $("hint").textContent = existing
+    ? "Already saved — record again to replace it, or use ‹ › to move. Arrow keys work too."
+    : "Tap the spacebar to record, read the line, spacebar to stop — clicks get trimmed automatically. Enter saves.";
+  $("redobtn").style.display = existing ? "inline-block" : "none";
+  $("prevbtn").disabled = idx === 0;
+  const keys = await refreshExport();
+  $("fill").style.width = Math.round(keys.length / IDS.length * 100) + "%";
+  $("progress").textContent = keys.length + " of " + IDS.length + " saved";
+}
+
+$("recbtn").onclick = () => {
+  if (mediaRec && mediaRec.state === "recording") { mediaRec.stop(); return; }
+  chunks = [];
+  const opt = (window.MediaRecorder && MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) ? { mimeType: "audio/webm;codecs=opus" } : undefined;
+  mediaRec = new MediaRecorder(stream, opt);
+  mediaRec.ondataavailable = e => chunks.push(e.data);
+  mediaRec.onstop = async () => {
+    const raw = new Blob(chunks, { type: (mediaRec && mediaRec.mimeType) || "audio/webm" });
+    $("hint").textContent = "Cleaning the take…";
+    try { blob = await cleanTake(raw); }        // trim silence + clicks, fade edges
+    catch (e) { blob = raw; }                   // if decoding fails, keep the raw take
+    $("playbtn").disabled = false; $("savebtn").disabled = false;
+    $("recbtn").textContent = "↺ Re-record"; $("recbtn").className = "btn ghost";
+    $("hint").textContent = "Cleaned — clicks and silence trimmed. Playing it back now… Enter saves.";
+    if (blob) new Audio(URL.createObjectURL(blob)).play();
+  };
+  mediaRec.start();
+  $("recbtn").textContent = "■ Stop"; $("recbtn").className = "btn rec";
+  $("hint").innerHTML = "<span class=pulse></span>Recording — read the line, then press Stop.";
+};
+
+/* ---- automatic take cleaning: trim silence & stray clicks, fade the edges ----
+   A trackpad click is a short burst; real speech sustains. We look for the first
+   and last *sustained* sound, cut everything outside it (plus a little padding),
+   and apply micro-fades so the file can never start or end with a pop. */
+async function cleanTake(rawBlob) {
+  const ac = new (window.AudioContext || window.webkitAudioContext)();
+  const buf = await ac.decodeAudioData(await rawBlob.arrayBuffer());
+  ac.close();
+  const sr = buf.sampleRate, n = buf.length;
+  const mono = new Float32Array(n);
+  for (let c = 0; c < buf.numberOfChannels; c++) {
+    const d = buf.getChannelData(c);
+    for (let i = 0; i < n; i++) mono[i] += d[i] / buf.numberOfChannels;
+  }
+  const win = Math.round(sr * 0.02), thr = 0.0126;           // 20ms windows, ≈ −38dB
+  const W = Math.floor(n / win), rms = new Float32Array(W);
+  for (let w = 0; w < W; w++) {
+    let s = 0;
+    for (let i = w * win; i < (w + 1) * win; i++) s += mono[i] * mono[i];
+    rms[w] = Math.sqrt(s / win);
+  }
+  const sustained = w => {                                    // loud AND stays loud ≥3 of next 8 windows
+    if (rms[w] < thr) return false;
+    let k = 0;
+    for (let j = w; j < Math.min(W, w + 8); j++) if (rms[j] > thr) k++;
+    return k >= 3;
+  };
+  let w0 = 0, w1 = W - 1;
+  while (w0 < W && !sustained(w0)) w0++;
+  while (w1 > w0 && rms[w1] < thr) w1--;
+  if (w0 >= W) return rawBlob;                                // silence? keep raw
+  let a = Math.max(0, w0 * win - Math.round(sr * 0.05));
+  let b = Math.min(n, (w1 + 1) * win + Math.round(sr * 0.06));
+  const out = mono.slice(a, b);
+  const fi = Math.round(sr * 0.025), fo = Math.round(sr * 0.045);
+  for (let i = 0; i < fi && i < out.length; i++) out[i] *= i / fi;
+  for (let i = 0; i < fo && i < out.length; i++) out[out.length - 1 - i] *= i / fo;
+  return wavBlob(out, sr);
+}
+function wavBlob(samples, sr) {
+  const buf = new ArrayBuffer(44 + samples.length * 2), v = new DataView(buf);
+  const ws = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  ws(0, "RIFF"); v.setUint32(4, 36 + samples.length * 2, true); ws(8, "WAVEfmt ");
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true); ws(36, "data"); v.setUint32(40, samples.length * 2, true);
+  for (let i = 0; i < samples.length; i++)
+    v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, samples[i])) * 0x7FFF, true);
+  return new Blob([buf], { type: "audio/wav" });
+}
+
+/* Hands-off keys: spacebar records/stops (no trackpad click on the mic), Enter saves. */
+document.addEventListener("keydown", (e) => {
+  if ($("studio").style.display === "none") return;
+  if (e.code === "Space") { e.preventDefault(); if (!$("recbtn").disabled) $("recbtn").click(); }
+  if (e.code === "Enter") { e.preventDefault(); if (!$("savebtn").disabled) $("savebtn").click(); }
+});
+
+$("playbtn").onclick = () => { if (blob) new Audio(URL.createObjectURL(blob)).play(); };
+$("redobtn").onclick = async () => { const b = await getTake(queue[idx]); if (b) new Audio(URL.createObjectURL(b)).play(); };
+
+$("savebtn").onclick = async () => {
+  if (!blob) return;
+  await putTake(queue[idx], blob);
+  next();
+};
+$("skipbtn").onclick = () => next();
+$("prevbtn").onclick = () => prev();
+
+function next() {
+  if (idx < queue.length - 1) { idx++; showLine(); return; }
+  $("prompt").textContent = "That's the last line. Export the zip below — or go ‹ Back to review and re-record anything.";
+  $("count").textContent = "END OF SCRIPT";
+  ["recbtn","savebtn","playbtn","skipbtn"].forEach(b => $(b).disabled = true);
+  $("prevbtn").disabled = false;
+  refreshExport();
+}
+function prev() { if (idx > 0) { idx--; showLine(); } }
+document.addEventListener("keydown", (e) => {
+  if ($("studio").style.display === "none") return;
+  if (mediaRec && mediaRec.state === "recording") return;   // no jumping mid-take
+  if (e.code === "ArrowLeft")  { e.preventDefault(); prev(); }
+  if (e.code === "ArrowRight") { e.preventDefault(); next(); }
+});
+
+/* ---- ZIP (stored, no compression) in vanilla JS ---- */
+const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; } return t; })();
+function crc32(buf) { let c = 0xFFFFFFFF; for (let i = 0; i < buf.length; i++) c = CRC_TABLE[(c ^ buf[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+
+$("export").onclick = async () => {
+  $("export").disabled = true; $("export").textContent = "Building zip…";
+  const keys = (await allKeys()).filter(k => k in LINES);
+  const files = [];
+  for (const id of keys) {
+    const b = await getTake(id);
+    const data = new Uint8Array(await b.arrayBuffer());
+    const isWebm = data[0] === 0x1a && data[1] === 0x45 && data[2] === 0xdf && data[3] === 0xa3;
+    const isMp4 = data[4] === 0x66 && data[5] === 0x74 && data[6] === 0x79 && data[7] === 0x70;
+    const isWav = data[0] === 0x52 && data[1] === 0x49 && data[2] === 0x46 && data[3] === 0x46;
+    const ext = isWav ? "wav" : isWebm ? "webm" : isMp4 ? "m4a" : (/mp4|aac/i.test(b.type || "") ? "m4a" : /wav/i.test(b.type || "") ? "wav" : "webm");
+    files.push({ name: "voice/" + id + "." + ext, data });
+  }
+  const enc = new TextEncoder(), parts = [], central = [];
+  let offset = 0;
+  for (const f of files) {
+    const nameB = enc.encode(f.name), crc = crc32(f.data), sz = f.data.length;
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true);
+    lh.setUint32(14, crc, true); lh.setUint32(18, sz, true); lh.setUint32(22, sz, true);
+    lh.setUint16(26, nameB.length, true);
+    parts.push(new Uint8Array(lh.buffer), nameB, f.data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true);
+    ch.setUint32(16, crc, true); ch.setUint32(20, sz, true); ch.setUint32(24, sz, true);
+    ch.setUint16(28, nameB.length, true); ch.setUint32(42, offset, true);
+    central.push(new Uint8Array(ch.buffer), nameB);
+    offset += 30 + nameB.length + sz;
+  }
+  let cdSize = 0; central.forEach(c => cdSize += c.length);
+  const eocd = new DataView(new ArrayBuffer(22));
+  eocd.setUint32(0, 0x06054b50, true); eocd.setUint16(8, files.length, true); eocd.setUint16(10, files.length, true);
+  eocd.setUint32(12, cdSize, true); eocd.setUint32(16, offset, true);
+  const zip = new Blob([...parts, ...central, new Uint8Array(eocd.buffer)], { type: "application/zip" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(zip); a.download = "voice-pack.zip"; a.click();
+  $("export").textContent = "⬇ Export voice-pack.zip"; $("export").disabled = false;
+  $("exphint").textContent = "Unzip next to fitness-snack.html so the voice folder sits beside it. Done.";
+};
+
+(async () => { try { db = await openDB(); refreshExport(); } catch (e) {} })();
+</script>
+</body>
+</html>

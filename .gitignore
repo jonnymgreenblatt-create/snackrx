@@ -1,0 +1,8 @@
+# Local backups & duplicate copies — keep out of the repo
+SNACKRX-master-backup-*.zip
+/SNACKRX-master/
+
+# Mac + Obsidian per-device clutter
+.DS_Store
+.obsidian/workspace*.json
+Vault/.obsidian/workspace*.json

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settle · Breath-Bar Reel Master v6 (screen-record me)</title>
+<style>
+  :root {
+    --bg: #F7F2E9; --ink: #2D2A26; --ink2: #8A8378;
+    --accent: #F47D31; --warm: #FAE3CE;
+    --field1: #FFE7C2; --field2: #FCD8A5;
+    --sans: "SF Pro Rounded", ui-rounded, -apple-system, "Segoe UI", "Nunito", Roboto, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #111; font-family: var(--sans); display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .stage { position: relative; container-type: size; width: min(100vw, 56.25vh); aspect-ratio: 9/16; background: var(--bg); overflow: hidden; }
+  .scene { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 8%; }
+  .scene.on { display: flex; animation: fade .5s ease; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+  .wm { position: absolute; top: 4%; left: 6%; font-size: 4.2cqmin; font-weight: 800; letter-spacing: -.3px; color: var(--ink2); z-index: 6; }
+  .wm b { color: var(--accent); }
+  #s-hook .wm { color: rgba(255,255,255,.75); }
+
+  /* HOOK — dark card, words popping */
+  #s-hook { background: var(--ink); }
+  #s-hook .hook { color: #fff; font-size: 12.5cqmin; font-weight: 800; line-height: 1.2; letter-spacing: -.5px; }
+  #s-hook .hook em { font-style: normal; color: var(--accent); }
+  #s-hook .hook .l { display: block; }
+  #s-hook .hook span { display: inline-block; animation: wordpop .38s cubic-bezier(.34,1.56,.64,1) backwards; }
+  @keyframes wordpop { from { opacity: 0; transform: translateY(4cqmin) scale(.7); } to { opacity: 1; transform: none; } }
+
+  /* PRACTICE — one sunny field, ONE bar. The bar carries the words. */
+  #s-practice { background: linear-gradient(var(--field1), var(--field2)); justify-content: flex-start; }
+
+  /* the breath bar — thumb-height on a held phone; the instruction IS inside it */
+  .barzone { position: absolute; left: 7cqmin; right: 7cqmin; top: 80cqmin; height: 36cqmin; }
+  .track { position: absolute; left: 0; right: 0; top: 3cqmin; height: 16cqmin; border-radius: 100px;
+           background: rgba(255,255,255,.6); box-shadow: inset 0 .5cqmin 1.5cqmin rgba(45,42,38,.08); }
+  .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 100px;
+          background: linear-gradient(90deg, #F9A24C, var(--accent)); }
+  .fill.pulse { animation: fillpulse .7s ease; }
+  @keyframes fillpulse { 30% { filter: brightness(1.18); } }
+  /* the words ride WITH the ball — floating just above it, like the ball says them */
+  .barword { position: absolute; top: -11.5cqmin; left: 0; white-space: nowrap;
+             font-size: 5.2cqmin; font-weight: 800; color: var(--ink); letter-spacing: -.2px;
+             opacity: 0; transition: opacity .4s ease; will-change: transform; }
+  .barword.show { opacity: 1; }
+  /* the character IS the ball riding the fill edge — BIG, the Headspace way */
+  .ballwrap { position: absolute; width: 26cqmin; height: 26cqmin; top: -2cqmin; left: 0;
+              will-change: transform; }
+  /* the ghost THUMB: the 👍, tilted diagonally so it reads as a thumb hovering
+     mid-scroll rather than a like. Ghosted, bobbing, first cycle only. */
+  .ghost { position: absolute; top: 24cqmin; left: 2.5cqmin; font-size: 8cqmin; line-height: 1;
+           filter: grayscale(.85); opacity: 0; transition: opacity .6s ease;
+           will-change: transform; animation: bob 2.4s ease-in-out infinite; }
+  .ghost span { display: inline-block; transform: rotate(-32deg); }
+  .ghost.show { opacity: .5; }
+  @keyframes bob { 0%,100% { margin-top: 0; } 50% { margin-top: .9cqmin; } }
+  /* the whisper: same quiet register as the ghost, centered, fades with it */
+  .whisper { position: absolute; top: 33.5cqmin; left: 0; right: 0; text-align: center;
+             font-size: 3.7cqmin; font-weight: 700; color: rgba(45,42,38,.45);
+             opacity: 0; transition: opacity .6s ease; }
+  .whisper.show { opacity: 1; }
+
+  /* B key: optional scenic backdrop — muted dusk mountains, still quiet */
+  #s-practice.scenic { background: linear-gradient(#FDE9CB 0%, #FAD9AC 55%, #F2C493 100%); }
+  .mtns { position: absolute; left: 0; right: 0; bottom: 0; height: 46cqmin; display: none; }
+  #s-practice.scenic .mtns { display: block; }
+  .chara { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 .9cqmin 1.8cqmin rgba(45,42,38,.22)); }
+  .chara .body { fill: var(--accent); }
+  /* Headspace-studied face: eyes stay softly CLOSED (∪ curves) in both states;
+     the MOUTH breathes — modest on the in-breath, wide on the out (their subtle
+     tell, confirmed from Jonny's reference frames). */
+  .chara .face path { transition: opacity .4s ease; }
+  .chara .m-in  { opacity: 1; }
+  .chara .m-out { opacity: 0; }
+  .chara.calm .m-in  { opacity: 0; }
+  .chara.calm .m-out { opacity: 1; }
+
+  /* PAYOFF */
+  #s-payoff .feel { font-size: 11.5cqmin; font-weight: 800; color: var(--ink); letter-spacing: -.5px; position: relative; z-index: 1; }
+  #s-payoff .sub { font-size: 5.4cqmin; color: var(--ink2); font-weight: 700; margin-top: 4%; position: relative; z-index: 1; }
+  #s-payoff::before {
+    content: ""; position: absolute; width: 76cqmin; height: 76cqmin; border-radius: 50%;
+    left: calc(50% - 38cqmin); top: calc(46% - 38cqmin); background: var(--warm);
+    animation: warmbreathe 3.4s ease-in-out infinite;
+  }
+  @keyframes warmbreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.045); } }
+
+  /* END CARDS */
+  #s-end .word, #s-endcta .word { font-size: 11cqmin; font-weight: 800; color: var(--ink); letter-spacing: -1px; }
+  #s-end .word span, #s-endcta .word span { color: var(--accent); }
+  #s-end .tag, #s-endcta .tag { font-size: 4.4cqmin; color: var(--ink2); font-weight: 700; }
+  #s-endcta .pitch { font-size: 5.4cqmin; font-weight: 800; color: var(--ink); line-height: 1.4; margin-bottom: 2%; }
+  #s-endcta .dog { width: 34cqmin; display: block; }
+  #s-endcta .cta { margin-top: 6%; background: var(--accent); color: #fff; font-weight: 800; font-size: 5.6cqmin; padding: 4% 10%; border-radius: 100px; }
+  #s-endcta .free { margin-top: 3.5%; font-size: 3.9cqmin; color: var(--ink2); font-weight: 600; }
+
+  .bar { position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; align-items: center; gap: 6px; opacity: 0; pointer-events: none; transition: opacity .3s; }
+  body.ui .bar { opacity: .45; pointer-events: auto; }
+  .bar button { background: #fff; border: none; border-radius: 100px; padding: 9px 12px; font-family: var(--sans); font-weight: 700; cursor: pointer; font-size: 12px; }
+  .bar button.sel { background: var(--accent); color: #fff; }
+  .bar .hint { color: #888; font-size: 11px; font-weight: 700; padding: 0 4px; }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="scene" id="s-hook">
+    <div class="wm">Settle<b>.</b></div>
+    <div class="hook" id="hooktext"></div>
+  </div>
+
+  <div class="scene" id="s-practice">
+    <svg class="mtns" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 60 L0 36 C 14 22 24 22 36 32 C 48 42 58 24 72 28 C 84 31 92 24 100 28 L100 60 Z" fill="#E8B991" opacity=".45"/>
+      <path d="M0 60 L0 48 C 12 40 24 42 36 48 C 50 55 60 38 76 44 C 86 48 94 44 100 47 L100 60 Z" fill="#DCA87F" opacity=".55"/>
+    </svg>
+    <div class="wm">Settle<b>.</b></div>
+    <div class="barzone">
+      <div class="track"><div class="fill" id="fill"></div></div>
+      <div class="barword" id="barword"></div>
+      <div class="ghost" id="ghost"><span>👍</span></div>
+      <div class="whisper" id="whisper">( trace with your thumb )</div>
+      <div class="ballwrap" id="ballwrap">
+        <svg class="chara" id="chara" viewBox="0 0 100 100" aria-hidden="true"><!-- the ball: Settle's face, breathing -->
+          <circle class="body" cx="50" cy="50" r="46"/>
+          <g class="face">
+            <path d="M 27 40 q 7 7 14 0" stroke="rgba(45,42,38,.62)" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+            <path d="M 55 40 q 7 7 14 0" stroke="rgba(45,42,38,.62)" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+            <ellipse cx="23" cy="55" rx="6" ry="3.6" fill="#E88C8C" opacity=".32"/>
+            <ellipse cx="73" cy="55" rx="6" ry="3.6" fill="#E88C8C" opacity=".32"/>
+            <path class="m-in"  d="M 41 59 q 9 7 18 0"   stroke="rgba(45,42,38,.62)" stroke-width="3.8" fill="none" stroke-linecap="round"/>
+            <path class="m-out" d="M 31 57 q 19 14 38 0" stroke="rgba(45,42,38,.62)" stroke-width="4.2" fill="none" stroke-linecap="round"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="scene" id="s-payoff">
+    <div class="wm">Settle<b>.</b></div>
+    <div class="feel">That's a movement snack.</div>
+    <div class="sub" id="payoff-sub">Sixty seconds, matched to how you feel.</div>
+  </div>
+
+  <div class="scene" id="s-end">
+    <div class="word">Settle<span>.</span></div>
+    <div class="tag">movement snacks for your mind</div>
+  </div>
+
+  <div class="scene" id="s-endcta">
+    <div class="pitch">60 seconds.<br>Matched to how you feel.</div>
+    <svg class="dog" viewBox="-70 -80 140 168" aria-hidden="true"><path d="M 30 -8 C 46 -20 54 -38 52 -54" stroke="#D8A868" stroke-width="15" fill="none" stroke-linecap="round"/><circle cx="52" cy="-56" r="8" fill="#D8A868"/><g stroke="#B8834A" stroke-width="2.5" fill="none" stroke-linecap="round"><path d="M 47 -62 L 47 -58"/><path d="M 52 -63 L 52 -59"/><path d="M 57 -61 L 57 -57"/></g><g class="wagtail"><path d="M 28 42 C 42 46 54 43 62 33" stroke="#D8A868" stroke-width="10" fill="none" stroke-linecap="round"/><animateTransform attributeName="transform" type="rotate" values="-3 29 42; -13 29 42; 3 29 42; -13 29 42; 3 29 42; -13 29 42; -3 29 42; -3 29 42" keyTimes="0; 0.06; 0.14; 0.22; 0.30; 0.38; 0.46; 1" dur="2.8s" repeatCount="indefinite"/></g><ellipse cx="0" cy="26" rx="38" ry="34" fill="#D8A868"/><ellipse cx="0" cy="30" rx="24" ry="22" fill="#EDD9B5"/><path d="M -18 52 C -20 62 -18 70 -14 76 M 18 52 C 20 62 18 70 14 76" stroke="#D8A868" stroke-width="13" fill="none" stroke-linecap="round"/><ellipse cx="-13" cy="77" rx="8" ry="5" fill="#B8834A"/><ellipse cx="13" cy="77" rx="8" ry="5" fill="#B8834A"/><path d="M -28 12 C -40 22 -44 34 -40 44" stroke="#D8A868" stroke-width="14" fill="none" stroke-linecap="round"/><circle cx="-41" cy="46" r="7.5" fill="#D8A868"/><circle cx="0" cy="-34" r="34" fill="#D8A868"/><path d="M -26 -58 C -42 -60 -50 -44 -48 -26 C -47 -16 -42 -12 -36 -14 C -30 -17 -26 -30 -26 -58 Z" fill="#B8834A"/><path d="M 26 -58 C 42 -60 50 -44 48 -26 C 47 -16 42 -12 36 -14 C 30 -17 26 -30 26 -58 Z" fill="#B8834A"/><ellipse cx="15" cy="-30" rx="13" ry="14" fill="#B8834A" opacity=".45"/><ellipse cx="-14" cy="-29" rx="10.5" ry="12" fill="#fff"/><ellipse cx="14" cy="-29" rx="10.5" ry="12" fill="#fff"/><circle cx="-12.5" cy="-27.5" r="6" fill="#2D2A26"/><circle cx="15.5" cy="-27.5" r="6" fill="#2D2A26"/><circle cx="-10.5" cy="-29.8" r="2.4" fill="#fff"/><circle cx="17.5" cy="-29.8" r="2.4" fill="#fff"/><ellipse cx="0" cy="-14" rx="15" ry="11" fill="#F2E7CF"/><ellipse cx="0" cy="-19" rx="7" ry="5" fill="#3E3428"/><path d="M -9 -13 Q 0 -2 9 -13 Q 0 -8 -9 -13 Z" fill="#3E3428"/><path d="M -3.5 -6 Q 0 -3 3.5 -6 L 3.5 -8.5 Q 0 -6 -3.5 -8.5 Z" fill="#E88C8C"/><path d="M -22 -2 C -10 4 10 4 22 -2 L 20 6 C 9 10 -9 10 -20 6 Z" fill="#F47D31"/><circle cx="0" cy="9" r="4.5" fill="#F0C75E"/></svg>
+    <div class="word">Settle<span>.</span></div>
+    <div class="tag">movement snacks for your mind</div>
+    <div class="cta">Try one free</div>
+    <div class="free">settlemoves.com · no signup, nothing to install</div>
+  </div>
+
+</div>
+
+<div class="bar">
+  <button id="b-1" class="sel" onclick="setVariant(1)">1 pure</button>
+  <button id="b-2" onclick="setVariant(2)">2 CTA</button>
+  <button id="b-3" onclick="setVariant(3)">3 don't scroll</button>
+  <button id="b-4" onclick="setVariant(4)">4 instant</button>
+  <button id="b-5" onclick="setVariant(5)">5 box</button>
+  <button id="b-6" onclick="setVariant(6)">6 loop</button>
+  <button id="b-7" onclick="setVariant(7)">7 eyes</button>
+  <button onclick="cycleSound()" id="b-s">🔇</button>
+  <button onclick="play()">&#8635;</button>
+  <span class="hint">1-7 · S · B bg · space</span>
+</div>
+
+<script>
+"use strict";
+/* ============================================================================
+   BREATH-BAR REEL MASTER v6 (2026-07-20) — instruction lives IN the bar.
+
+   Research (Apple Breathe · five-finger breathing · Headspace activities):
+   nobody explains the mechanic. One pairing phrase, then the animation
+   teaches. So: the bar itself says "breathe in" while it fills and
+   "breathe out" while it drains; a ghost 👆 glides under the ball for the
+   first cycle (SHOW, don't tell), then fades. No other instructions exist.
+   Sound: mode 1 plays Jonny's real recorded br_in/br_out app clips at each
+   phase start (the ad speaks with the product's voice — needs this file to
+   sit next to the voice/ folder; falls back to synth if missing).
+
+
+   Jonny's verdict on the circle: too complex, not Headspace-simple. Correct.
+   v5 is ONE FIELD, ONE WORD, ONE BAR:
+   · Flat sunny background. No beach scene, no ring, no orbit, no directions.
+   · A horizontal BREATH BAR at thumb height. It FILLS left→right on the
+     inhale and DRAINS right→left on the exhale — a stamina bar refilling
+     with breath. The character IS the ball riding the fill edge (eyes open
+     on the in, soft-closed on the out); the viewer's thumb FLOATS just above
+     the glass and glides with him — "don't touch," because a thumb ON the
+     screen scrolls the feed away (Jonny's catch). One line, then it fades.
+   · Box variant: the bar HOLDS full (hold) and empty (rest) — charging.
+   · Giant breath word center-high: "in…" / "…and out". Nothing else.
+   · Breath sound deepened: a soft low tone-body under the air noise
+     (rises with the in-breath, sinks with the out). S cycles:
+     off → breath → beach (breath + birds + soft music pad).
+     For the paid cut: record REAL breathing + stock sound in CapCut.
+   Same six variants (keys 1-6). Loop = record EXACTLY 20.0s (two cycles).
+   Controls appear on mouse-move only — hands off while recording.
+   ========================================================================== */
+
+const PATTERNS = {
+  settle: [ { k: "in", dur: 4 }, { k: "out", dur: 6 } ],
+  box:    [ { k: "in", dur: 4 }, { k: "hold", dur: 4 }, { k: "out", dur: 4 }, { k: "rest", dur: 4 } ],
+};
+const HOOKS = {
+  1: '<span class="l"><span>Breathe</span></span><span class="l"><span>with</span> <span>your</span> <span>thumb<em>.</em></span></span>',
+  2: '<span class="l"><span>Breathe</span></span><span class="l"><span>with</span> <span>your</span> <span>thumb<em>.</em></span></span>',
+  3: '<span class="l"><span>Don\'t</span> <span>scroll<em>.</em></span></span><span class="l"><span>Breathe<em>.</em></span></span>',
+  7: '<span class="l"><span>Don\'t</span> <span>move</span></span><span class="l"><span>a</span> <span>muscle<em>.</em></span></span>',
+  5: '<span class="l"><span>Breathe</span></span><span class="l"><span>with</span> <span>your</span> <span>thumb<em>.</em></span></span>',
+};
+const VARIANTS = {
+  1: { hookEnd: 2.0, pattern: "settle", cycles: 2, cta: false },
+  2: { hookEnd: 2.0, pattern: "settle", cycles: 1, cta: true  },
+  3: { hookEnd: 2.6, pattern: "settle", cycles: 1, cta: true  },
+  4: { hookEnd: 0,   pattern: "settle", cycles: 2, cta: false },
+  5: { hookEnd: 2.0, pattern: "box",    cycles: 1, cta: false },
+  /* 6 · loop — the gift: no hook, no payoff, no CTA, no ending. The thumb
+     hint plays once then fades, so for a SEAMLESS loop record 20.0s starting
+     at t=20.0s (cycles 3+4, both hint-free). Recording from 0 instead gives a
+     "with hint" cut whose loop seam shows the hint reappearing — fine as a
+     second flavor, not seamless. */
+  6: { hookEnd: 0,   pattern: "settle", cycles: 2, cta: false, loop: true },
+  /* 7 · eyes — the subtlest snack: no thumb at all. Slow lateral tracking of
+     the ball = bilateral smooth pursuit (research: eye-movement interventions
+     deactivate the amygdala; lateral movements tax working memory — the app's
+     own one-job mechanism). Copy stays wellness-honest: we NEVER say EMDR or
+     imply therapy — just "follow with your eyes." */
+  7: { hookEnd: 2.2, pattern: "settle", cycles: 2, cta: false, eyes: true },
+};
+const PAYOFF = 3.2, END = 4.2;
+
+let V = 1, t0 = null, raf = null, soundMode = 0;
+const $ = id => document.getElementById(id);
+
+function cycleDur(p) { return PATTERNS[p].reduce((a, s) => a + s.dur, 0); }
+function marks() {
+  const v = VARIANTS[V];
+  const practiceStart = v.hookEnd;
+  const practiceEnd   = v.loop ? Infinity : practiceStart + v.cycles * cycleDur(v.pattern);
+  const payoffEnd     = practiceEnd + PAYOFF;
+  return { v, practiceStart, breatheStart: practiceStart, practiceEnd, payoffEnd, total: payoffEnd + END };
+}
+function scene(id) { document.querySelectorAll(".scene").forEach(s => s.classList.toggle("on", s.id === id)); }
+function setVariant(n) {
+  V = n;
+  [1,2,3,4,5,6,7].forEach(i => $("b-" + i).classList.toggle("sel", i === n));
+  play();
+}
+
+function breathAt(t, m) {
+  const steps = PATTERNS[m.v.pattern];
+  const cd = cycleDur(m.v.pattern);
+  const bt = ((t - m.breatheStart) % cd + cd) % cd;
+  const cyc = Math.floor((t - m.breatheStart) / cd);
+  let acc = 0;
+  for (const s of steps) {
+    if (bt < acc + s.dur) return { k: s.k, p: (bt - acc) / s.dur, cyc };
+    acc += s.dur;
+  }
+  return { k: "rest", p: 1, cyc };
+}
+/* the bar: 0 = empty (ball left) · 1 = full (ball right). Eased so the ball
+   glides out of and into the ends — thumb-followable, never robotic. */
+function fillFrac(b) {
+  const ease = p => 0.5 - 0.5 * Math.cos(Math.PI * p);
+  if (b.k === "in")   return ease(b.p);
+  if (b.k === "hold") return 1;
+  if (b.k === "out")  return 1 - ease(b.p);
+  return 0;
+}
+/* pronounced Headspace-style swell: 0.92 empty → 1.22 full of breath */
+function ballScale(b) {
+  const ease = p => 0.5 - 0.5 * Math.cos(Math.PI * p);
+  if (b.k === "in")   return 0.92 + 0.3 * ease(b.p);
+  if (b.k === "hold") return 1.22;
+  if (b.k === "out")  return 1.22 - 0.3 * ease(b.p);
+  return 0.92;
+}
+const BREATH_WORDS = { in: "breathe in", hold: "hold", out: "breathe out", rest: "rest" };
+/* Jonny's own recorded app voice — the ad speaks with the product's lungs.
+   Relative paths: works when this file sits in SNACKRX-master next to voice/.
+   Falls back silently to the synth if the files are missing. */
+const VO = { in: new Audio("voice/br_in.m4a"), out: new Audio("voice/br_out.m4a") };
+let voOK = true;
+Object.values(VO).forEach(a => { a.preload = "auto"; a.onerror = () => { voOK = false; }; });
+/* Jonny's REAL breath recordings — drop these two files into voice/ and they
+   take over from the synthesized air automatically:
+     voice/breath_in.m4a   (one soft ~4s nasal inhale, close to the mic)
+     voice/breath_out.m4a  (one slow ~6s exhale)
+   Record with Voice Memos in a quiet room; louder than feels natural. */
+const BR = { in: new Audio("voice/breath_in.m4a"), out: new Audio("voice/breath_out.m4a") };
+let brOK = true;
+Object.values(BR).forEach(a => { a.preload = "auto"; a.volume = 0.9; a.onerror = () => { brOK = false; }; });
+
+/* ---------------- sound: breath (noise + tone body) · birds · music ---------------- */
+let AC = null, breathGain = null, bp = null, toneOsc = null, toneGain = null,
+    musicGain = null, musicLp = null, birdTimeout = null;
+function buildSound() {
+  AC = new (window.AudioContext || window.webkitAudioContext)();
+  const len = 4 * AC.sampleRate, buf = AC.createBuffer(1, len, AC.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  const src = AC.createBufferSource(); src.buffer = buf; src.loop = true;
+  bp = AC.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 600; bp.Q.value = 0.9;
+  const lp = AC.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 2400;
+  breathGain = AC.createGain(); breathGain.gain.value = 0;
+  src.connect(bp).connect(lp).connect(breathGain).connect(AC.destination);
+  src.start();
+  // the tone body: a quiet low sine under the air — the "diaphragm" of the sound
+  toneOsc = AC.createOscillator(); toneOsc.type = "sine"; toneOsc.frequency.value = 180;
+  toneGain = AC.createGain(); toneGain.gain.value = 0;
+  toneOsc.connect(toneGain).connect(AC.destination); toneOsc.start();
+  // music pad: soft Fmaj7, triangle voices, warm lowpass
+  musicLp = AC.createBiquadFilter(); musicLp.type = "lowpass"; musicLp.frequency.value = 750; musicLp.Q.value = 0.3;
+  musicGain = AC.createGain(); musicGain.gain.value = 0;
+  musicLp.connect(musicGain).connect(AC.destination);
+  [174.61, 220.0, 261.63, 329.63].forEach((f, i) => {
+    const o = AC.createOscillator(); o.type = "triangle"; o.frequency.value = f; o.detune.value = (i % 2 ? 4 : -3);
+    const g = AC.createGain(); g.gain.value = 0.028 - i * 0.004;
+    o.connect(g).connect(musicLp); o.start();
+  });
+}
+function warble() {
+  if (!AC || soundMode < 2) return;
+  const syll = 3 + Math.floor(Math.random() * 4);
+  const base = 2500 + Math.random() * 800;
+  let at = AC.currentTime + 0.05;
+  for (let i = 0; i < syll; i++) {
+    const o = AC.createOscillator(), g = AC.createGain();
+    const f0 = base + (Math.random() - 0.3) * 400;
+    o.frequency.setValueAtTime(f0, at);
+    o.frequency.exponentialRampToValueAtTime(f0 + (i % 2 === 0 ? 1 : -1) * (350 + Math.random() * 450), at + 0.07);
+    g.gain.setValueAtTime(0, at);
+    g.gain.linearRampToValueAtTime(0.032, at + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + 0.1);
+    o.connect(g).connect(AC.destination);
+    o.start(at); o.stop(at + 0.12);
+    at += 0.09 + Math.random() * 0.12;
+  }
+  birdTimeout = setTimeout(warble, 2200 + Math.random() * 2600);
+}
+function cycleSound() {
+  soundMode = (soundMode + 1) % 3;
+  $("b-s").textContent = soundMode === 0 ? "🔇" : soundMode === 1 ? "🎙 voice" : "🏝️ beach";
+  $("b-s").classList.toggle("sel", soundMode > 0);
+  if (soundMode > 0 && !AC) buildSound();
+  if (AC && AC.state === "suspended") AC.resume();
+  clearTimeout(birdTimeout);
+  if (soundMode === 2) { warble(); musicGain.gain.setTargetAtTime(0.5, AC.currentTime, 1.2); }
+  else if (musicGain) musicGain.gain.setTargetAtTime(0, AC.currentTime, 0.4);
+  if (soundMode === 0) {
+    if (breathGain) breathGain.gain.setTargetAtTime(0, AC.currentTime, 0.2);
+    if (toneGain) toneGain.gain.setTargetAtTime(0, AC.currentTime, 0.2);
+  }
+}
+function soundLevel(t, m) {
+  if (soundMode === 0 || !breathGain) return;
+  let g = 0.012, f = 600, q = 0.9, tg = 0, tf = 180;
+  if (t >= m.breatheStart && t < m.practiceEnd) {
+    const b = breathAt(t, m);
+    // real recordings lead; synth shrinks to a bed (voice) or near-silence (real breath)
+    const lead = (brOK && soundMode >= 1) ? 0.12 : (voOK && soundMode >= 1) ? 0.45 : 1;
+    if (b.k === "in")  { g = lead * (0.015 + 0.24 * Math.sin(Math.PI * b.p)); f = 520 + 640 * b.p; q = 1.2;
+                         tg = lead * 0.035 * Math.sin(Math.PI * b.p); tf = 165 + 60 * b.p; }
+    if (b.k === "out") { g = lead * (0.015 + 0.19 * Math.sin(Math.PI * Math.pow(b.p, 0.8))); f = 980 - 620 * b.p; q = 0.7;
+                         tg = lead * 0.03 * Math.sin(Math.PI * b.p); tf = 220 - 65 * b.p; }
+    if (b.k === "hold" || b.k === "rest") { g = 0.02; f = 620; tg = 0.008; }
+  }
+  breathGain.gain.setTargetAtTime(g, AC.currentTime, 0.09);
+  bp.frequency.setTargetAtTime(f, AC.currentTime, 0.09);
+  bp.Q.setTargetAtTime(q, AC.currentTime, 0.2);
+  toneGain.gain.setTargetAtTime(tg, AC.currentTime, 0.12);
+  toneOsc.frequency.setTargetAtTime(tf, AC.currentTime, 0.12);
+  if (soundMode === 2 && musicLp) musicLp.frequency.setTargetAtTime(700 + 180 * Math.sin(t * 0.35), AC.currentTime, 0.3);
+}
+
+/* ------------------------------ main clock ------------------------------ */
+let lastWord = "", lastCyc = -1;
+function frame(now) {
+  if (t0 === null) t0 = now;
+  const t = (now - t0) / 1000;
+  const m = marks();
+
+  if (t < m.v.hookEnd) scene("s-hook");
+  else if (t < m.practiceEnd) {
+    scene("s-practice");
+    const b = breathAt(t, m);
+    const f = fillFrac(b);
+    // bar geometry in px
+    const track = document.querySelector(".track").getBoundingClientRect();
+    const bw = $("ballwrap").getBoundingClientRect().width;
+    const x = f * (track.width - bw * 0.4) - bw * 0.3;   // ball straddles the fill edge
+    $("fill").style.width = (f * 100) + "%";
+    $("ballwrap").style.transform = "translateX(" + x + "px) scale(" + ballScale(b) + ")";
+    $("chara").classList.toggle("calm", b.k === "out" || b.k === "rest");
+    if (b.cyc !== lastCyc && b.cyc > 0) {                // a completed cycle → little pulse
+      lastCyc = b.cyc;
+      const fl = $("fill");
+      fl.classList.remove("pulse"); void fl.offsetWidth; fl.classList.add("pulse");
+    } else if (b.cyc !== lastCyc) lastCyc = b.cyc;
+    const word = BREATH_WORDS[b.k];
+    // the word floats above the ball, clamped so it never leaves the bar zone
+    const zoneW = track.width, lw = $("barword").getBoundingClientRect().width;
+    const lx = Math.max(0, Math.min(zoneW - lw, x + bw / 2 - lw / 2));
+    $("barword").style.transform = "translateX(" + lx + "px)";
+    if (word !== lastWord) {
+      lastWord = word;
+      $("barword").textContent = word; $("barword").classList.add("show");
+      // Jonny's recorded voice on each moving phase (soft synth stays underneath)
+      if (soundMode >= 1 && (b.k === "in" || b.k === "out")) {
+        if (voOK) { const a = VO[b.k]; try { a.currentTime = 0; a.play().catch(() => {}); } catch (e) {} }
+        if (brOK) { const a = BR[b.k]; try { a.currentTime = 0; a.play().catch(() => {}); } catch (e) {} }
+      }
+    }
+    // the ghost thumb glides under the ball: first cycle only (always in the loop cut)
+    const ghostOn = b.cyc === 0 && !m.v.eyes;    // one cycle of teaching, then gone — loop included; eyes variant has no thumb
+    $("ghost").classList.toggle("show", ghostOn);
+    $("whisper").classList.toggle("show", ghostOn || (m.v.eyes && b.cyc === 0));
+    if (ghostOn) $("ghost").style.transform = "translateX(" + (x + 3) + "px)";
+  }
+  else if (t < m.payoffEnd) scene("s-payoff");
+  else if (t < m.total) scene(m.v.cta ? "s-endcta" : "s-end");
+  else { scene(m.v.cta ? "s-endcta" : "s-end"); cancelAnimationFrame(raf);
+         if (breathGain) { breathGain.gain.setTargetAtTime(0, AC.currentTime, 0.4); toneGain.gain.setTargetAtTime(0, AC.currentTime, 0.4); } return; }
+
+  soundLevel(t, m);
+  raf = requestAnimationFrame(frame);
+}
+function play() {
+  cancelAnimationFrame(raf);
+  t0 = null; lastWord = ""; lastCyc = -1;
+  const v = VARIANTS[V];
+  $("whisper").textContent = v.eyes ? "( just follow with your eyes )" : "( trace with your thumb )";
+  $("payoff-sub").textContent = v.eyes ? "Your eyes just gave your mind one job." : "Sixty seconds, matched to how you feel.";
+  if (v.hookEnd > 0) $("hooktext").innerHTML = HOOKS[V] || HOOKS[1];
+  $("barword").classList.remove("show");
+  $("ghost").classList.remove("show");
+  $("whisper").classList.remove("show");
+  $("chara").classList.remove("calm");
+  if (AC && AC.state === "suspended") AC.resume();
+  raf = requestAnimationFrame(frame);
+}
+
+/* Controls can never sneak into a recording: they appear on mouse-move,
+   auto-hide after 2.5s of stillness, and vanish INSTANTLY on any key press —
+   so drive everything with the keyboard (1-6, S, B, space) and record clean. */
+let uiTimer = null;
+document.addEventListener("mousemove", () => {
+  document.body.classList.add("ui");
+  clearTimeout(uiTimer);
+  uiTimer = setTimeout(() => document.body.classList.remove("ui"), 2500);
+});
+document.addEventListener("keydown", e => {
+  document.body.classList.remove("ui");
+  clearTimeout(uiTimer);
+  if (["1","2","3","4","5","6","7"].includes(e.key)) setVariant(+e.key);
+  if (e.key.toLowerCase() === "s") cycleSound();
+  if (e.key.toLowerCase() === "b") document.getElementById("s-practice").classList.toggle("scenic");
+  if (e.key === " " || e.key.toLowerCase() === "r") { e.preventDefault(); play(); }
+});
+play();
+</script>
+</body>
+</html>

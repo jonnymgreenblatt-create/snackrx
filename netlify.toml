@@ -1,0 +1,56 @@
+# Settle — Netlify config. Functions live in netlify/functions.
+[functions]
+  directory = "netlify/functions"
+
+# Clean share links for reels/socials — the pinned comment shows the pretty
+# path, the redirect quietly carries the UTMs the waitlist form records.
+# (Added 2026-07-20; ships with the next deploy batch.)
+[[redirects]]
+  from = "/snack"
+  to = "/?utm_source=fb-reel&utm_content=snack"
+  status = 302
+
+[[redirects]]
+  from = "/eyes"
+  to = "/?utm_source=fb-reel&utm_content=eyes-v1"
+  status = 302
+
+[[redirects]]
+  from = "/breathe"
+  to = "/?utm_source=fb-reel&utm_content=breathe-v1"
+  status = 302
+
+[[redirects]]
+  from = "/loop"
+  to = "/?utm_source=fb-reel&utm_content=loop-v1"
+  status = 302
+
+# The thumb-breath reel (Settle_reel2) — matches the utm_content already used
+# in its pinned-comment full-UTM link, so attribution stays continuous.
+[[redirects]]
+  from = "/thumb"
+  to = "/?utm_source=fb-reel&utm_content=thumb-v1"
+  status = 302
+
+# Instagram bio link (@settlemoves) — IG only allows one clickable link, in the
+# bio, so all IG traffic funnels through here regardless of which reel drove it.
+# (Added 2026-07-21.)
+[[redirects]]
+  from = "/ig"
+  to = "/?utm_source=ig-bio"
+  status = 302
+
+# Welcome email to early waitlist members (2026-07-22) — the pretty link used
+# in the email; the redirect quietly carries the utm so email-driven visits
+# attribute cleanly in Netlify Forms + the funnel.
+[[redirects]]
+  from = "/hi"
+  to = "/?utm_source=welcome-email"
+  status = 302
+
+# The welcome email's snack link (2026-07-24): lands straight on the Tense
+# prescription (Slow shoulder rolls) via the new ?mood= deep link.
+[[redirects]]
+  from = "/3pm"
+  to = "/?utm_source=welcome-email&utm_content=3pm&mood=tense"
+  status = 302

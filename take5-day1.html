@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Take·5 master — Day 1 · Unclench (jaw)</title>
+<style>
+  :root {
+    --ink: #2b2320;
+    --cream: #fdf6ec;
+    --orange: #f47b3f;
+    --orange-deep: #e05f1f;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: #171310; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center;
+         font-family: ui-rounded, "SF Pro Rounded", "Nunito", "Quicksand", system-ui, sans-serif; }
+
+  /* ---- 9:16 stage, cqmin sizing so any window shape/zoom records correctly ---- */
+  .stage {
+    position: relative;
+    aspect-ratio: 9 / 16;
+    height: min(100vh, 177.78vw);
+    container-type: size;
+    overflow: hidden;
+    background: var(--cream);
+  }
+  canvas#scene { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .layer { position: absolute; inset: 0; pointer-events: none; }
+
+  /* text system (bloom-master conventions: word-by-word pop) */
+  .txt {
+    position: absolute; left: 8cqmin; right: 8cqmin;
+    text-align: center; color: #3a2f26;
+    text-shadow: 0 0.3cqmin 2.2cqmin rgba(253,246,236,0.9), 0 0 1cqmin rgba(253,246,236,0.7);
+    font-weight: 800; letter-spacing: -0.01em;
+  }
+  .txt .w { display: inline-block; opacity: 0; transform: translateY(1.6cqmin) scale(0.92); }
+  .txt .w.pop { animation: pop 0.42s cubic-bezier(0.2, 1.4, 0.4, 1) forwards; }
+  @keyframes pop { to { opacity: 1; transform: translateY(0) scale(1); } }
+  .txt.big  { top: 19cqmin; font-size: 8cqmin; line-height: 1.16; }
+  .txt.mid  { top: 22cqmin; font-size: 5.6cqmin; line-height: 1.25; }
+  .txt.low  { bottom: 24cqmin; font-size: 5cqmin; line-height: 1.3; }
+  .txt.whisper {
+    bottom: 15.5cqmin; font-size: 3.4cqmin; font-weight: 600;
+    color: rgba(58,47,38,0.78); letter-spacing: 0.02em;
+  }
+  .txt.orbword { top: 63cqmin; font-size: 4.4cqmin; font-weight: 700; color: rgba(58,47,38,0.85); }
+  .fadeout { animation: fade 0.7s ease forwards; }
+  @keyframes fade { to { opacity: 0; } }
+
+  /* wordmark chrome */
+  #mark {
+    position: absolute; top: 4.6cqmin; left: 0; right: 0; text-align: center;
+    color: rgba(58,47,38,0.92); font-weight: 800; font-size: 4.2cqmin;
+    text-shadow: 0 0.3cqmin 1.6cqmin rgba(253,240,221,0.8);
+    opacity: 0; transition: opacity 0.8s;
+  }
+  #mark.on { opacity: 1; }
+  #mark .dot { color: var(--orange); }
+  #mark .tag { display: block; font-size: 2.3cqmin; font-weight: 700;
+               color: rgba(58,47,38,0.7); letter-spacing: 0.03em; margin-top: 0.6cqmin; }
+
+  /* end card (ad variant): dog closes, house rule */
+  #endcard {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3cqmin;
+    background: var(--cream); opacity: 0; transition: opacity 0.9s ease; pointer-events: none;
+  }
+  #endcard.on { opacity: 1; }
+  #endcard .dog { width: 32cqmin; height: 32cqmin; }
+  #endcard h2 { color: var(--ink); font-size: 6.4cqmin; font-weight: 800;
+                text-align: center; line-height: 1.22; padding: 0 9cqmin; letter-spacing: -0.01em; }
+  /* was overflowing the stage on 9:16 — no width constraint, no centring */
+  #endcard .sub { color: #7a6a5f; font-size: 3.5cqmin; font-weight: 700; text-align: center;
+                  line-height: 1.4; padding: 0 11cqmin; max-width: 100%; text-wrap: balance; }
+  #endcard .sub b { display: block; color: #9a8a7d; font-size: 3.1cqmin; font-weight: 700;
+                    margin-top: 0.8cqmin; }
+  #endcard .url { margin-top: 1cqmin; background: var(--orange); color: #fff;
+                  font-weight: 800; font-size: 4.2cqmin; padding: 2cqmin 5cqmin;
+                  border-radius: 100cqmin; box-shadow: 0 1.2cqmin 3cqmin rgba(224,95,31,0.35); }
+
+  /* lesson player: pause + time remaining (the Headspace session chrome, ours) */
+  #player {
+    position: absolute; left: 10cqmin; right: 10cqmin; bottom: 4.2cqmin;
+    display: flex; align-items: center; gap: 2.6cqmin;
+    opacity: 0; transition: opacity 0.8s ease; pointer-events: none;
+  }
+  #player.on { opacity: 1; pointer-events: auto; }
+  #pp {
+    width: 8.4cqmin; height: 8.4cqmin; border: none; border-radius: 50%;
+    background: rgba(43,35,32,0.08); color: #3a2f26; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  }
+  #pp svg { width: 3.6cqmin; height: 3.6cqmin; fill: #3a2f26; }
+  #ptrack {
+    flex: 1; height: 1.2cqmin; border-radius: 100cqmin;
+    background: rgba(43,35,32,0.12); overflow: hidden;
+  }
+  #pfill { height: 100%; width: 0%; border-radius: 100cqmin; background: var(--orange); }
+  #ptime {
+    flex: 0 0 auto; font-size: 3cqmin; font-weight: 700;
+    color: rgba(58,47,38,0.7); font-variant-numeric: tabular-nums;
+  }
+
+  /* recording-safe controls: mouse-move only, auto-hide */
+  #ctl {
+    position: fixed; left: 12px; bottom: 12px; z-index: 50;
+    background: rgba(12,16,15,0.92); color: #dfe8e4; border-radius: 10px;
+    font: 12px/1.6 ui-monospace, monospace; padding: 10px 13px;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  #ctl.show { opacity: 1; }
+  #ctl b { color: #fff; }
+  #ctl .on { color: #ffb27d; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <canvas id="scene"></canvas>
+  <div id="mark">Settle<span class="dot">.</span><span class="tag">movement snacks for your mind</span></div>
+  <div class="layer" id="txtLayer"></div>
+
+  <div id="player">
+    <button id="pp" aria-label="pause">
+      <svg id="ppPause" viewBox="0 0 24 24"><rect x="5" y="4" width="5" height="16" rx="1.6"/><rect x="14" y="4" width="5" height="16" rx="1.6"/></svg>
+      <svg id="ppPlay" viewBox="0 0 24 24" style="display:none"><path d="M7 4.8 Q7 3.6 8.1 4.2 L19.2 11 Q20.2 11.6 19.2 12.3 L8.1 19.1 Q7 19.7 7 18.5 Z"/></svg>
+    </button>
+    <div id="ptrack"><div id="pfill"></div></div>
+    <span id="ptime"></span>
+  </div>
+
+  <div id="endcard">
+    <svg class="dog" viewBox="0 0 120 120">
+      <ellipse cx="60" cy="118" rx="30" ry="5" fill="rgba(43,35,32,0.08)"/>
+      <path d="M28 44 Q22 20 38 26 Q46 30 46 40 Z" fill="#d99a4e"/>
+      <path d="M92 44 Q98 20 82 26 Q74 30 74 40 Z" fill="#d99a4e"/>
+      <circle cx="60" cy="56" r="34" fill="#eebd77"/>
+      <circle cx="47" cy="50" r="12" fill="#c98944" opacity="0.55"/>
+      <circle cx="47" cy="50" r="4.6" fill="#2b2320"/>
+      <circle cx="73" cy="50" r="4.6" fill="#2b2320"/>
+      <circle cx="48.6" cy="48.4" r="1.5" fill="#fff"/>
+      <circle cx="74.6" cy="48.4" r="1.5" fill="#fff"/>
+      <ellipse cx="60" cy="63" rx="6.4" ry="5" fill="#2b2320"/>
+      <path d="M60 68 Q60 74 52 74 M60 68 Q60 74 68 74" stroke="#2b2320" stroke-width="2.6"
+            fill="none" stroke-linecap="round"/>
+      <path d="M46 86 Q60 96 74 86 L74 92 Q60 102 46 92 Z" fill="#f47b3f"/>
+      <circle cx="60" cy="95" r="4" fill="#f7c948"/>
+    </svg>
+    <h2>Take·5</h2>
+    <div class="sub">a free five-day course · a few minutes a day
+      <b>no app, nothing to install</b></div>
+    <div class="url">settlemoves.com/take5</div>
+  </div>
+</div>
+
+<div id="ctl">
+  <b>Take·5 master — Day 1 · Unclench</b><br>
+  <span id="vlabel"></span><br>
+  <b>1</b> full lesson (~3:40, text-guided; voice slots wired) · <b>2</b> ad cut (~31s) · <b>3</b> loop (12.0s)<br>
+  <b>V</b> voice: <span id="slabel" class="on">auto</span> (plays voice/take5/d1_full.wav from t=0 if present) · <b>R</b> restart · <b>space</b> pause<br>
+  Record: window any size (stage letterboxes) · controls vanish after 2.5s stillness / any key
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var stage = document.getElementById("stage");
+  var canvas = document.getElementById("scene");
+  var ctx = canvas.getContext("2d");
+  var txtLayer = document.getElementById("txtLayer");
+  var mark = document.getElementById("mark");
+  var endcard = document.getElementById("endcard");
+
+  // ---------- params ----------
+  var qs = new URLSearchParams(location.search);
+  var variant = +(qs.get("v") || 1);          // 1 lesson, 2 ad, 3 loop
+  var seek = parseFloat(qs.get("t") || "0");  // debug seek (seconds)
+  var voiceOn = true;
+
+  // ---------- canvas sizing ----------
+  var W = 0, H = 0, DPR = Math.min(window.devicePixelRatio || 1, 2);
+  function resize() {
+    var r = stage.getBoundingClientRect();
+    W = r.width; H = r.height;
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  function ease(u) { return u < 0 ? 0 : u > 1 ? 1 : u * u * (3 - 2 * u); }
+  function clamp(u) { return u < 0 ? 0 : u > 1 ? 1 : u; }
+  // fade-in at t0 over rIn, fade-out at t1 over rOut
+  function window01(t, t0, rIn, t1, rOut) { return clamp(ease((t - t0) / rIn) - ease((t - t1) / rOut)); }
+
+  // one slow breath at t0: 4s in, 6s out (the app's long-exhale science)
+  function breathEnv(t, t0) {
+    var u = t - t0;
+    if (u <= 0 || u >= 10) return 0;
+    if (u < 4) return ease(u / 4);
+    return 1 - ease((u - 4) / 6);
+  }
+  // continuous breath-pace pulse: the head breathes at the app's 4-in/6-out tempo the whole
+  // time (the character IS the pacer). t0 phase-locks the cycle so guided breaths land on it.
+  function breathCycle(t, t0) {
+    var u = (t - t0) % 10;
+    if (u < 0) u += 10;
+    if (u < 4) return ease(u / 4);
+    return 1 - ease((u - 4) / 6);
+  }
+
+  // ---------- ambient motes (calm daylight, not the reel dusk) ----------
+  var MOTES = [];
+  for (var mo = 0; mo < 12; mo++)
+    MOTES.push({ x: Math.sin(mo * 37.7) * 0.5 + 0.5, y: 0.18 + ((mo * 0.61) % 1) * 0.6,
+                 ph: mo * 1.9, sp: 0.5236 * (1 + (mo % 3)) });   // 12s-harmonic → loop-safe
+
+  // ---------- a hand that reads as a hand (restored: the two-finger cue read as confusing) ----------
+  // palm + four fanned fingers + thumb, fingertips toward the contact point.
+  function drawHand(x, y, R, s, alpha) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(x, y);
+    ctx.rotate(s * -0.5);            // fingers angle in toward the jaw
+    ctx.scale(s, 1);                 // mirror for the left hand
+    var u = R * 0.01;                // hand unit
+    // palm
+    ctx.fillStyle = "#d95c1e";
+    ctx.beginPath();
+    ctx.ellipse(0, 6 * u, 11 * u, 13 * u, 0, 0, 6.29);
+    ctx.fill();
+    // four fingers: capsules fanned from the palm top
+    ctx.strokeStyle = "#d95c1e";
+    ctx.lineCap = "round";
+    ctx.lineWidth = 5.2 * u;
+    var FING = [ [-7.5, -0.22, 14], [-2.5, -0.08, 16.5], [2.5, 0.06, 16], [7, 0.2, 13.5] ];
+    for (var f = 0; f < FING.length; f++) {
+      var fx = FING[f][0] * u, fa = FING[f][1], fl = FING[f][2] * u;
+      ctx.beginPath();
+      ctx.moveTo(fx, -2 * u);
+      ctx.lineTo(fx + Math.sin(fa) * fl, -2 * u - Math.cos(fa) * fl);
+      ctx.stroke();
+    }
+    // finger separation hints
+    ctx.strokeStyle = "rgba(160,60,15,0.35)";
+    ctx.lineWidth = 1.1 * u;
+    for (var c = 0; c < 3; c++) {
+      var cxx = (-5 + c * 5) * u;
+      ctx.beginPath();
+      ctx.moveTo(cxx, -1 * u);
+      ctx.lineTo(cxx, -4.5 * u);
+      ctx.stroke();
+    }
+    // thumb: short capsule off the palm's inner-lower side
+    ctx.strokeStyle = "#d95c1e";
+    ctx.lineWidth = 5.6 * u;
+    ctx.beginPath();
+    ctx.moveTo(8 * u, 10 * u);
+    ctx.lineTo(14.5 * u, 4.5 * u);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // circular direction arrow around a contact point: dashed arc + arrowhead, rotating with dir
+  function drawArrow(t, x, y, R, dir, alpha) {
+    if (alpha <= 0.01) return;
+    var r = R * 0.3;
+    var spin = t * 1.4 * dir;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = "rgba(43,35,32,0.6)";
+    ctx.lineWidth = R * 0.022;
+    ctx.lineCap = "round";
+    ctx.setLineDash([R * 0.06, R * 0.05]);
+    var a0 = spin, a1 = spin + 4.4 * dir;
+    ctx.beginPath();
+    ctx.arc(x, y, r, a0, a1, dir < 0);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // arrowhead at the leading end
+    var hx = x + Math.cos(a1) * r, hy = y + Math.sin(a1) * r;
+    var tangent = a1 + dir * Math.PI / 2;
+    ctx.fillStyle = "rgba(43,35,32,0.6)";
+    ctx.beginPath();
+    ctx.moveTo(hx + Math.cos(tangent) * R * 0.07, hy + Math.sin(tangent) * R * 0.07);
+    ctx.lineTo(hx + Math.cos(tangent + 2.5) * R * 0.045, hy + Math.sin(tangent + 2.5) * R * 0.045);
+    ctx.lineTo(hx + Math.cos(tangent - 2.5) * R * 0.045, hy + Math.sin(tangent - 2.5) * R * 0.045);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ---------- the face (ball-character language: orange, ink strokes, blush) ----------
+  // p: { face, hands, circ {ph, amp}, dir, arrows, clench, soft, relax, eyes, breath, orb, glow, sway }
+  function drawFace(t, p) {
+    var cx = W * 0.5, cy = H * 0.46;
+    var R = W * 0.29 * (1 + 0.185 * p.breath);  // swell — the character IS the breath pacer
+    // the whole body also RISES on the inhale and settles on the exhale: the cue the eye
+    // actually reads at a glance (scale alone is nearly invisible on a phone).
+    cy -= R * 0.085 * p.breath;
+    var ink = "#2b2320";
+
+    // soft breathing halo behind the head (unrotated)
+    if (p.breath > 0.01 || p.glow > 0.01) {
+      var hr = R * (1.25 + 0.72 * p.breath);
+      var halo = ctx.createRadialGradient(cx, cy, R * 0.4, cx, cy, hr * 1.6);
+      halo.addColorStop(0, "rgba(255,214,150," + (0.26 + 0.3 * p.breath) + ")");
+      halo.addColorStop(1, "rgba(255,214,150,0)");
+      ctx.fillStyle = halo;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // ground shadow (unrotated)
+    ctx.fillStyle = "rgba(43,35,32,0.07)";
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + R * (1.38 + 0.09 * p.breath), R * (0.72 - 0.135 * p.breath), R * 0.09, 0, 0, 6.29);
+    ctx.fill();
+
+    // gentle head-rock once the practice is underway: deeply-relaxed body language
+    var swayA = Math.sin(t * (Math.PI * 2 / 7)) * 0.028 * p.sway;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(swayA);
+    ctx.translate(-cx, -cy);
+
+    // head: jaw "hangs" = the ball settles slightly longer and lower as it relaxes
+    var sy = 1 + 0.045 * p.relax;
+    var dy = R * 0.03 * p.relax;
+    ctx.save();
+    ctx.translate(cx, cy + dy);
+    ctx.scale(1, sy);
+    var hg = ctx.createRadialGradient(-R * 0.25, -R * 0.3, R * 0.2, 0, 0, R * 1.15);
+    hg.addColorStop(0, "#f89055");
+    hg.addColorStop(1, "#ef6f30");
+    ctx.fillStyle = hg;
+    ctx.beginPath(); ctx.arc(0, 0, R, 0, 6.29); ctx.fill();
+    ctx.restore();
+
+    // masseter points: the corner of the jaw, just in front of the "ear line"
+    var jx = R * 0.74, jy = R * 0.4 * sy + dy;
+
+    // clench: the muscle visibly bulges under the glow (the find-it teach)
+    if (p.clench > 0.01) {
+      ctx.fillStyle = "rgba(224,95,31," + 0.5 * p.clench + ")";
+      [-1, 1].forEach(function (s) {
+        ctx.beginPath();
+        ctx.ellipse(cx + s * jx * 0.94, cy + jy, R * 0.13, R * 0.16, s * 0.4, 0, 6.29);
+        ctx.fill();
+      });
+    }
+
+    // glow at the contact points
+    if (p.glow > 0.01) {
+      [-1, 1].forEach(function (s) {
+        var g = ctx.createRadialGradient(cx + s * jx, cy + jy, 0, cx + s * jx, cy + jy, R * 0.34);
+        g.addColorStop(0, "rgba(255,221,122," + 0.7 * p.glow + ")");
+        g.addColorStop(1, "rgba(255,221,122,0)");
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(cx + s * jx, cy + jy, R * 0.34, 0, 6.29); ctx.fill();
+      });
+    }
+
+    // blush
+    ctx.fillStyle = "rgba(224,95,31,0.28)";
+    [-1, 1].forEach(function (s) {
+      ctx.beginPath();
+      ctx.ellipse(cx + s * R * 0.5, cy + R * 0.18 * sy + dy, R * 0.13, R * 0.09, 0, 0, 6.29);
+      ctx.fill();
+    });
+
+    // eyes: open dots → gentle closed ∪ (the house rule: ∪, never ∩)
+    ctx.strokeStyle = ink; ctx.fillStyle = ink;
+    ctx.lineWidth = R * 0.055; ctx.lineCap = "round";
+    var ex = R * 0.36, ey = -R * 0.16 + dy;
+    [-1, 1].forEach(function (s) {
+      var x0 = cx + s * ex, y0 = cy + ey;
+      if (p.eyes < 0.5) {
+        ctx.beginPath(); ctx.arc(x0, y0, R * 0.065, 0, 6.29); ctx.fill();
+        ctx.fillStyle = "#fff";
+        ctx.beginPath(); ctx.arc(x0 + R * 0.022, y0 - R * 0.024, R * 0.022, 0, 6.29); ctx.fill();
+        ctx.fillStyle = ink;
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(x0 - R * 0.1, y0 - R * 0.02);
+        ctx.quadraticCurveTo(x0, y0 + R * 0.09, x0 + R * 0.1, y0 - R * 0.02);
+        ctx.stroke();
+      }
+    });
+
+    // mouth: clenched pressed line → small smile → long loose rest curve
+    var my = cy + R * 0.38 * sy + dy;
+    ctx.lineWidth = R * 0.055;
+    ctx.beginPath();
+    // A FLAT LINE READS AS STERN — the mascot must never look grim (house rule).
+    // Clenching narrows the mouth and shallows the curve, but it stays a smile.
+    var soft = clamp(p.soft), cl = clamp(p.clench);
+    var mw = R * (0.16 + 0.1 * soft) * (1 - 0.22 * cl);
+    var md = R * ((0.10 - 0.05 * soft) * (1 - 0.60 * cl) + 0.014 * cl);
+    ctx.moveTo(cx - mw, my);
+    ctx.quadraticCurveTo(cx, my + md, cx + mw, my);
+    ctx.stroke();
+
+    // direction arrows: BOTH sides spin the same on-screen direction (mirrored spins confused)
+    [-1, 1].forEach(function (s) {
+      drawArrow(t, cx + s * jx, cy + jy, R, p.dir, p.arrows);
+    });
+
+    // hands (same-direction circles on both sides, matching the arrows; resting when amp = 0)
+    if (p.hands > 0.01) {
+      var rise = (1 - ease(p.hands)) * R * 0.9;
+      var amp = R * 0.05 * p.circ.amp;
+      [-1, 1].forEach(function (s) {
+        var hx = cx + s * jx + Math.cos(p.circ.ph * p.dir) * amp;
+        var hy = cy + jy + rise + Math.sin(p.circ.ph * p.dir) * amp;
+        drawHand(hx, hy + R * 0.1, R, s, ease(p.hands));
+      });
+    }
+
+    ctx.restore();   // sway
+  }
+
+  // ---------- day-dots chip (simple progress, replaces the dials metaphor) ----------
+  function drawDays(t, vis) {
+    if (vis <= 0.01) return;
+    var n = 5, gap = W * 0.06, x0 = W * 0.5 - gap * 2, y = H * 0.135, r = W * 0.014;
+    ctx.save();
+    ctx.globalAlpha = vis;
+    for (var i = 0; i < n; i++) {
+      var x = x0 + i * gap;
+      if (i === 0) {
+        ctx.fillStyle = "#f47b3f";
+        ctx.beginPath(); ctx.arc(x, y, r * 1.25, 0, 6.29); ctx.fill();
+      } else {
+        ctx.strokeStyle = "rgba(43,35,32,0.4)";
+        ctx.lineWidth = W * 0.004;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, 6.29); ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = vis * 0.75;
+    ctx.fillStyle = "#3a2f26";
+    ctx.font = "700 " + (W * 0.032) + "px ui-rounded, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("day 1 of 5", W * 0.5, y + W * 0.06);
+    ctx.restore();
+  }
+
+  // ---------- breathing orb (the ritual breath + the last slow breath) ----------
+  function drawOrb(t, breath) {
+    if (breath <= 0.01) return;
+    var cx = W * 0.5, cy = H * 0.46;
+    var r = W * 0.16 * (0.55 + 0.6 * breath);
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = "rgba(244,123,63,0.13)";
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, 6.29); ctx.fill();
+    ctx.strokeStyle = "#f47b3f";
+    ctx.lineWidth = W * 0.006;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, 6.29); ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawBg(t) {
+    var grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, "#fdf6ec");
+    grad.addColorStop(0.7, "#fbeacf");
+    grad.addColorStop(1, "#f8ddb6");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+    for (var mi = 0; mi < MOTES.length; mi++) {
+      var m = MOTES[mi];
+      var mx = (m.x + Math.sin(t * m.sp * 0.5 + m.ph) * 0.03) * W;
+      var my2 = (m.y + Math.sin(t * m.sp + m.ph) * 0.015) * H;
+      var tw = 0.22 + 0.18 * Math.sin(t * m.sp * 2 + m.ph);
+      ctx.fillStyle = "rgba(244,150,80," + tw * 0.35 + ")";
+      ctx.beginPath(); ctx.arc(mx, my2, W * 0.004, 0, 6.29); ctx.fill();
+    }
+  }
+
+  // ---------- scene parameter tracks ----------
+  // LESSON key times (also the CapCut / voice-booth timestamp map)
+  var L = {
+    ritualBreath: 15.5,
+    teach: 43.3,
+    faceOn: 25.8,
+    clenchOn: 33.6, clenchOff: 54.8,
+    handsUp: 26.3,
+    circStart: 63.5,
+    flip: 84.6,
+    eyesCue: 94.2,
+    circlesEnd: 114.4,
+    handsDown: 116.4,
+    relaxFull: 128.0,
+    lastBreath: 136.6,
+    still: 145.5,
+    close: 156.4,
+    daysOn: 172.2,
+    end: 182.0
+  };
+  function paramsLesson(t) {
+    var faceA = ease((t - L.faceOn) / 1.4);
+    var hands = t < L.handsUp ? 0 : t < L.handsDown ? ease((t - L.handsUp) / 2.5)
+              : 1 - ease((t - L.handsDown) / 2.5);
+    var circAmp = t > L.circStart && t < L.circlesEnd ? 1 : 0;
+    var dir = t < L.flip ? 1 : -1;
+    // arrows teach each direction, then get out of the way
+    var arrows = window01(t, L.circStart + 0.5, 1.5, L.circStart + 11, 2)
+               + window01(t, L.flip, 1.5, L.flip + 11, 2);
+    var clench = window01(t, L.clenchOn, 1.2, L.clenchOff, 1.6);
+    var relax = ease((t - L.handsDown) / (L.relaxFull - L.handsDown));
+    // softness creeps in during the massage; eyes drift closed after the invitation
+    var soft = clamp(0.5 * ease((t - L.circStart) / (L.circlesEnd - L.circStart)) + relax);
+    var eyes = Math.max(ease((t - (L.eyesCue + 2.5)) / 3), relax);
+    var glowTeach = t > L.faceOn + 1 && t < L.circStart ? (0.45 + 0.25 * Math.sin(t * 1.8) + 0.35 * clench) : 0;
+    var glowHands = circAmp ? 0.65 + 0.35 * Math.sin(t * 5.2) : 0;
+    return {
+      face: faceA,
+      hands: hands,
+      circ: { ph: t * 5.2, amp: circAmp },
+      dir: dir,
+      arrows: clamp(arrows) * faceA,
+      clench: clench,
+      soft: soft,
+      relax: relax,
+      eyes: eyes,
+      // baseline breath-tempo pulse always on; guided breaths deepen it (phase-locked at 13.8)
+      breath: clamp(0.78 * breathCycle(t, L.ritualBreath) + 0.35 * breathEnv(t, L.lastBreath)),
+      orb: breathEnv(t, L.ritualBreath),
+      glow: clamp(glowTeach + glowHands) * faceA,
+      sway: ease((t - (L.circStart + 3)) / 6),
+      days: ease((t - L.daysOn) / 1)
+    };
+  }
+
+  // AD key times (~31s)
+  var A = {
+    handsUp: 4.5, circStart: 15.0, circlesEnd: 23.1, handsDown: 23.7,
+    clenchOn: 0.9, clenchOff: 12.1,
+    relaxFull: 28.5, endcard: 36.0, end: 41.0
+  };
+  function paramsAd(t) {
+    var hands = t < A.handsUp ? 0 : t < A.handsDown ? ease((t - A.handsUp) / 1.8)
+              : 1 - ease((t - A.handsDown) / 1.8);
+    var circAmp = t > A.circStart && t < A.circlesEnd ? 1 : 0;
+    var relax = ease((t - A.handsDown) / (A.relaxFull - A.handsDown));
+    return {
+      face: ease(t / 1.2),
+      hands: hands,
+      circ: { ph: t * 5.2, amp: circAmp },
+      dir: 1,
+      arrows: window01(t, A.circStart + 0.5, 1.2, A.circlesEnd - 1.5, 1.5),
+      clench: window01(t, A.clenchOn, 1.0, A.clenchOff, 1.4),   // clenches along with the viewer
+      soft: clamp(0.4 * ease((t - A.circStart) / 6) + relax),
+      relax: relax,
+      eyes: relax,
+      breath: clamp(0.78 * breathCycle(t, A.handsDown + 1) + 0.35 * breathEnv(t, A.handsDown + 1)),
+      orb: 0,
+      glow: (t > 1.2 && t < A.circStart ? 0.45 + 0.3 * Math.sin(t * 1.8)
+              + 0.4 * window01(t, A.clenchOn, 1.0, A.clenchOff, 1.4) : 0)
+          + (circAmp ? 0.65 + 0.35 * Math.sin(t * 5.2) : 0),
+      sway: ease((t - (A.circStart + 2)) / 4),
+      days: 0
+    };
+  }
+
+  // LOOP: massage circles forever; every period divides 12.0s → record 0.0–12.0s exactly
+  function paramsLoop(t) {
+    return {
+      face: 1, hands: 1,
+      circ: { ph: t * (Math.PI * 2 / 1.2), amp: 1 },        // 1.2s hand circle: 10 per loop
+      dir: 1,
+      arrows: 0.35 + 0.25 * Math.sin(t * (Math.PI * 2 / 6)),
+      clench: 0,
+      soft: 0.4, relax: 0, eyes: 0,
+      breath: 0.5 - 0.5 * Math.cos(t * (Math.PI * 2 / 12)),  // 12s face-breath
+      orb: 0,
+      glow: 0.65 + 0.35 * Math.sin(t * (Math.PI * 2 / 2.4)),
+      sway: 1,   // 7s rock is NOT 12s-harmonic; loop sway uses its own term below
+      days: 0
+    };
+  }
+
+  // ---------- text beats ----------
+  // Estimated speaking time for a line (calm narration + real pauses at punctuation).
+  // The word-pop is spread across THIS, not across the whole beat window — so the
+  // reveal rate is the delivery pace, and the silence after is visibly silence.
+  function speechDur(t, cls) {
+    var x = t.replace(/[()]/g, "").trim();
+    var w = x.split(/\s+/).filter(Boolean).length;
+    var rate = cls === "big" ? 1.6 : cls === "whisper" ? 2.0 : 2.35;   // words/sec
+    return w / rate
+         + (x.match(/[.!?]/g) || []).length * 0.42
+         + (x.match(/[,;:]/g) || []).length * 0.18;
+  }
+
+  function showText(id, cls, words, wordGap) {
+    var el = document.createElement("div");
+    el.className = "txt " + cls;
+    el.id = id;
+    var nw = words.split(" ").length;
+    // wordGap here is the MEASURED spoken duration of this line (0 = fall back to the estimate).
+    // Pop spreads across it, so the reveal is literally Jonny's delivery pace.
+    var spoken = wordGap > 0 ? wordGap : speechDur(words, cls);
+    var gapFor = nw > 1 ? Math.max(0.05, (spoken - 0.30) / (nw - 1)) : 0;
+    words.split(" ").forEach(function (w, i) {
+      var sp = document.createElement("span");
+      sp.className = "w";
+      sp.textContent = w;
+      sp.style.animationDelay = (i * gapFor) + "s";
+      el.appendChild(sp);
+      el.appendChild(document.createTextNode(" "));
+    });
+    txtLayer.appendChild(el);
+    requestAnimationFrame(function () {
+      el.querySelectorAll(".w").forEach(function (sp) { sp.classList.add("pop"); });
+    });
+    return el;
+  }
+  function killText(id) {
+    var el = document.getElementById(id);
+    if (el) { el.classList.add("fadeout"); setTimeout(function () { el.remove(); }, 750); }
+  }
+  function T(id, cls, words, gap) { return function () { showText(id, cls, words, gap); }; }
+  function K() {
+    var ids = Array.prototype.slice.call(arguments);
+    return function () { ids.forEach(killText); };
+  }
+  function seq(a, b) { return function () { a(); b(); }; }
+
+  // Every on-screen line is also the voice-booth script line (captions stay: muted feeds).
+  // v2 (2026-07-26): trimmed 3:38 -> 3:11. Hands find the muscle BEFORE the teach.
+  // Every on-screen line is also the voice-booth script line (captions stay: muted feeds).
+  // v2 (2026-07-26): trimmed 3:38 -> 3:15. Hands find the muscle BEFORE the teach.
+  // v2.1: the ritual breath now runs its FULL 4-in/6-out before anything else moves.
+  // Every on-screen line is also the voice-booth script line (captions stay: muted feeds).
+  // v3 (2026-07-28): every window now >= the line's estimated speaking time + real silence.
+  // Word-pop is derived from speechDur(), so the reveal paces the delivery. 3:13.
+  // v4 (2026-07-28): caption times RETIMED to Jonny's actual recorded delivery
+  // (measured onsets from d1_full.wav; median lag in the take was +0.88s).
+  // The video now fits the performance instead of the other way round.
+  // v4 (2026-07-28): caption times RETIMED to Jonny's actual recorded delivery
+  // (onsets measured from d1_full.wav; median lag in the take was +0.88s).
+  // The video now fits the performance instead of the other way round.
+  // v5 (2026-07-28): times fitted to Jonny's recorded delivery; the 4th arg of T() is now
+  // the MEASURED spoken duration of that line, so the word-pop runs at his real pace — and
+  // every caption is guaranteed to stay up at least 1.15s after its last word appears.
+  // v6 (2026-07-28): fitted to TAKE 2. The booth's 0.8s lead-in cut Jonny's delivery lag
+  // from +0.88s to +0.24s, so these times are now nearly the script's own. 4th arg of T()
+  // is the measured spoken duration; every caption outlives its last word by >=1.15s.
+  // v7 (2026-07-28): "Your mind takes cues from your muscles" + "All day it checks..." CUT.
+  // Runs masseter -> "This one muscle". 2:58. Times are estimates again (take 3 pending);
+  // they get refitted to the real delivery once the recording lands.
+  // v8 (2026-07-28): fitted to TAKE 3 — delivery lag is now +0.08s median (sd 0.19).
+  // Two teach lines cut; vocal-fry frames down from 28.9% to 20.3% vs take 2.
+  var BEATS_LESSON = [
+    [0.49, T("t1", "big", "Day one. Unclench.", 1.58)],
+    [3.22, K("t1")],
+    [4.51, T("t2", "mid", "Take five. Sit tall. Feel your feet on the floor.", 3.8)],
+    [9.46, K("t2")],
+    [10.75, T("t3", "mid", "Let your hands rest. One slow breath.", 3.04)],
+    [14.94, K("t3")],
+    [15.5, T("b1", "orbword", "breathe in", 2.2)],
+    [19.5, seq(K("b1"), T("b2", "orbword", "breathe out, slow", 2.6))],
+    [25.5, K("b2")],
+    [26.13, T("t4", "mid", "Fingertips to the corners of your jaw, just in front of your ears.", 3.76)],
+    [31.04, K("t4")],
+    [32.97, T("t5", "mid", "Now clench your teeth, gently. Feel that small bulge under your fingertips?", 4.92)],
+    [39.04, K("t5")],
+    [39.99, T("t6", "mid", "That's the masseter.", 0.92)],
+    [42.06, K("t6")],
+    [43.19, T("t9", "mid", "This one muscle gets more of your brain's attention than your entire back does. So it's a shortcut to relaxation.", 6.64)],
+    [50.98, K("t9")],
+    [54.11, T("t10", "mid", "And unclench. Feel it soften. Just let it go.", 4.02)],
+    [59.28, K("t10")],
+    [59.59, T("t11", "mid", "Let's begin.", 0.68)],
+    [61.42, K("t11")],
+    [63.35, T("c1", "low", "Small, slow circles. Both sides. No hurry.", 4.52)],
+    [69.02, K("c1")],
+    [73.51, T("c2", "low", "If you find a tender spot, stay with it. Gentle.", 3.72)],
+    [78.38, K("c2")],
+    [84.43, T("c3", "low", "Now circle the other way.", 1.28)],
+    [86.86, K("c3")],
+    [94.05, T("c4", "low", "If it feels nice, let your eyes close.", 2.9)],
+    [98.1, K("c4")],
+    [104.03, T("w1", "whisper", "( just keep breathing. slow and easy )", 2.38)],
+    [107.56, K("w1")],
+    [114.29, T("c5", "low", "Now let the hands rest. Teeth apart. Lips closed.", 4.28)],
+    [119.72, K("c5")],
+    [124.47, T("c6", "low", "Let the tongue rest low. The jaw just hangs.", 3.44)],
+    [129.06, K("c6")],
+    [134.97, T("c7", "low", "One more slow breath, out through the nose.", 3.12)],
+    [139.24, K("c7")],
+    [145.35, T("s1", "whisper", "( now be still a moment. just notice what's humming )", 3.32)],
+    [149.82, K("s1")],
+    [156.21, T("e1", "mid", "Notice how much you were holding.", 1.36)],
+    [158.72, K("e1")],
+    [161.47, T("e2", "mid", "So from now on: at a red light, or a loading screen. Teeth apart, jaw relaxed. That's your cue now.", 9.48)],
+    [172.1, K("e2")],
+    [172.2, function () { mark.classList.add("on"); }],
+    [172.55, T("e3", "low", "That's day one. See you tomorrow.", 2.32)],
+    [176.02, K("e3")]
+  ];
+
+  // AD CUT v2 (2026-07-28): windows sized to the lines; close now names the COURSE.
+  // AD CUT v3 (2026-07-28): fitted to the recorded VO (lag -0.12s median), and 2.0s of dead
+  // air excised — 1.2s straight after the hook, where the calf reel's retention curve bled.
+  // AD CUT v4 (2026-07-28): straight into the instruction — hand is on the jaw by second 2.
+  // Claim corrected to "your face" (true of the facial/jaw region on the cortical map);
+  // "this one muscle vs your entire back" overstates what a single muscle can be said to own.
+  // AD CUT v4 (2026-07-28): straight into the instruction — the viewer has clenched by
+  // second 2 and has fingers on the muscle by second 4. Claim corrected to "your face":
+  // the facial/jaw region genuinely outweighs the trunk on the cortical map, whereas
+  // "this ONE MUSCLE vs your entire back" claims more than a single muscle can own.
+  // AD CUT v5 (2026-07-28, Jonny's copy). Structure: DO -> NAME -> RELIEVE -> REALISE.
+  // No brain-map claim at all — the recognition lands at the end, after the relief, instead
+  // of being asserted up front. Clenched by second 2, fingers on the muscle by second 5.
+  // AD CUT v5 (2026-07-28, Jonny's copy). DO -> NAME -> RELIEVE -> REALISE.
+  // No brain-map claim — the recognition lands at the END, after the relief.
+  var BEATS_AD = [
+    [0.3, T("a1", "big", "Try clenching your teeth. Gently.", 3.1)],
+    [4.15, K("a1")],
+    [4.3, T("a2", "mid", "Feel that, just below your ears?", 2.52)],
+    [7.82, K("a2")],
+    [8.0, T("a3", "mid", "That bulging muscle? That's your masseter.", 2.67)],
+    [11.67, K("a3")],
+    [12.0, T("a4", "mid", "Let's relax it together.", 1.68)],
+    [14.68, K("a4")],
+    [15.0, T("a5", "mid", "Small, slow circles. Both sides.", 2.47)],
+    [18.47, K("a5")],
+    [20.0, T("aw", "whisper", "( gentle. keep breathing )", 2.06)],
+    [23.06, K("aw")],
+    [23.5, T("a6", "mid", "Now let it hang. Teeth apart, lips closed.", 3.51)],
+    [28.01, K("a6")],
+    [28.5, T("a7", "mid", "Notice how much you were holding.", 2.37)],
+    [31.85, K("a7")],
+    [32.0, T("a8", "mid", "That's day one. There are four more.", 3.01)],
+    [35.85, seq(K("a8"), function () { endcard.classList.add("on"); })]
+  ];
+
+
+
+
+
+
+
+  // ---------- voice slot (Jonny's full-take file drops in and takes over) ----------
+  // Booth timestamps = the beat times above. Until the recording exists this plays nothing.
+  var voiceEl = null;
+  function tryVoice() {
+    if (!voiceOn || variant === 3) return;
+    stopVoice();
+    voiceEl = new Audio(variant === 2 ? "voice/take5/d1_ad.wav" : "voice/take5/d1_full.wav");
+    voiceEl.currentTime = seek || 0;
+    var p = voiceEl.play();
+    if (p && p.catch) p.catch(function () { voiceEl = null; });  // absent file / autoplay-block: silent
+  }
+  function stopVoice() {
+    if (voiceEl) { voiceEl.pause(); voiceEl = null; }
+  }
+
+  // ---------- runner ----------
+  var startTs = null, fired = [], BEATS = BEATS_LESSON, END = L.end;
+  var vlabel = document.getElementById("vlabel");
+
+  // ---------- player (lesson only): pause + time remaining ----------
+  var player = document.getElementById("player");
+  var pfill = document.getElementById("pfill");
+  var ptime = document.getElementById("ptime");
+  var ppPause = document.getElementById("ppPause");
+  var ppPlay = document.getElementById("ppPlay");
+  var paused = false, pausedAt = 0;
+  function fmtLeft(s) {
+    s = Math.max(0, Math.ceil(s));
+    return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2) + " left";
+  }
+  function setPPIcon() {
+    ppPause.style.display = paused ? "none" : "";
+    ppPlay.style.display = paused ? "" : "none";
+  }
+  function togglePause() {
+    if (variant !== 1) return;
+    if (!paused) {
+      paused = true;
+      pausedAt = (performance.now() - startTs) / 1000;
+      if (voiceEl) voiceEl.pause();
+    } else {
+      paused = false;
+      startTs = performance.now() - pausedAt * 1000;
+      if (voiceEl) { voiceEl.currentTime = pausedAt; voiceEl.play().catch(function () {}); }
+    }
+    setPPIcon();
+  }
+  document.getElementById("pp").addEventListener("click", togglePause);
+  function updatePlayer(t) {
+    pfill.style.width = clamp(t / END) * 100 + "%";
+    ptime.textContent = fmtLeft(END - t);
+  }
+
+  function labelVariant() {
+    vlabel.textContent = "variant " + variant + " — " +
+      ["", "FULL LESSON (~3:40 · ritual, teach, find-it clench, massage both ways, release, still moment, close)",
+           "AD CUT (~31s · hook, 10s follow-along, release, dog end card)",
+           "seamless loop (massage circles · record 0.0–12.0s exactly)"][variant];
+  }
+
+  function reset() {
+    txtLayer.innerHTML = "";
+    mark.classList.remove("on");
+    endcard.classList.remove("on");
+    BEATS = variant === 2 ? BEATS_AD : BEATS_LESSON;
+    END = variant === 2 ? A.end : L.end;
+    fired = BEATS.map(function () { return false; });
+    startTs = performance.now() - seek * 1000;
+    paused = false; setPPIcon();
+    player.classList.toggle("on", variant === 1);   // session chrome: lesson only, never in ad/loop cuts
+    labelVariant();
+    if (variant === 3) mark.classList.add("on");
+    tryVoice();
+  }
+
+  function frame(now) {
+    var t = paused ? pausedAt : (now - startTs) / 1000;
+    if (variant === 1) updatePlayer(Math.min(t, END));
+
+    if (variant === 3) {
+      drawBg(t);
+      var lp = paramsLoop(t);
+      lp.sway = 0;               // keep the loop seam perfect: no 7s rock
+      drawFace(t, lp);
+    } else {
+      if (t > END) t = END;      // hold final frame (recording tail)
+      var p = variant === 2 ? paramsAd(t) : paramsLesson(t);
+      drawBg(t);
+      if (p.days > 0.01) drawDays(t, p.days);
+      if (p.orb > 0.001) drawOrb(t, p.orb);
+      if (p.face > 0.01) {
+        ctx.save();
+        ctx.globalAlpha = p.face;
+        drawFace(t, p);
+        ctx.restore();
+      }
+      BEATS.forEach(function (b, i) { if (!fired[i] && t >= b[0]) { fired[i] = true; b[1](); } });
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- controls ----------
+  var ctl = document.getElementById("ctl"), hideTimer = null;
+  function peekCtl() {
+    ctl.classList.add("show");
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(function () { ctl.classList.remove("show"); }, 2500);
+  }
+  window.addEventListener("mousemove", peekCtl);
+  window.addEventListener("keydown", function (e) {
+    ctl.classList.remove("show");   // any key instantly hides: keyboard-driven shoot
+    if (e.key === "1" || e.key === "2" || e.key === "3") { variant = +e.key; seek = 0; reset(); }
+    else if (e.key === "v" || e.key === "V") {
+      voiceOn = !voiceOn;
+      document.getElementById("slabel").textContent = voiceOn ? "auto" : "off";
+      if (!voiceOn) stopVoice(); else tryVoice();
+    }
+    else if (e.key === "r" || e.key === "R") { seek = 0; reset(); }
+    else if (e.key === " ") { e.preventDefault(); togglePause(); }
+  });
+
+  reset();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

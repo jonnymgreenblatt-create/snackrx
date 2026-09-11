@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settle · Ad Voiceover Booth</title>
+<style>
+  :root {
+    --bg: #F7F2E9; --card: #fff; --ink: #2D2A26; --ink2: #8A8378;
+    --line: #EDE6D9; --accent: #F47D31; --good: #5F8A4E;
+    --sans: "SF Pro Rounded", ui-rounded, -apple-system, "Segoe UI", "Nunito", Roboto, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--sans); display: flex; justify-content: center; min-height: 100vh; }
+  .app { width: 100%; max-width: 620px; padding: 28px 20px 80px; }
+  h1 { font-size: 26px; font-weight: 800; letter-spacing: -.5px; }
+  h1 span { color: var(--accent); }
+  p.sub { color: var(--ink2); font-size: 14px; margin: 6px 0 20px; line-height: 1.5; }
+  .card {
+    background: var(--card); border-radius: 18px; padding: 16px 18px; margin-bottom: 12px;
+    border: 2px solid transparent; transition: border-color .15s ease;
+  }
+  .card.active { border-color: var(--accent); }
+  .card.done { border-color: rgba(95,138,78,.5); }
+  .tagline { font-size: 11px; font-weight: 800; letter-spacing: .6px; color: var(--accent); text-transform: uppercase; }
+  .card.done .tagline { color: var(--good); }
+  .text { font-size: 17px; font-weight: 700; margin: 6px 0 4px; line-height: 1.45; }
+  .note { font-size: 12.5px; color: var(--ink2); line-height: 1.45; }
+  .row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  button {
+    font-family: var(--sans); font-weight: 700; font-size: 13.5px; cursor: pointer;
+    border: none; border-radius: 100px; padding: 10px 16px;
+  }
+  .b-rec { background: var(--accent); color: #fff; }
+  .b-rec.recording { background: #c0392b; animation: blink 1s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: .65; } }
+  .b-play { background: var(--bg); color: var(--ink); }
+  .b-dl { background: var(--ink); color: #fff; }
+  .b-play:disabled, .b-dl:disabled { opacity: .35; cursor: default; }
+  .len { font-size: 12px; color: var(--ink2); align-self: center; font-weight: 600; }
+  .toolbar { position: sticky; top: 0; background: var(--bg); padding: 10px 0 14px; z-index: 5; }
+  .b-all { background: var(--good); color: #fff; width: 100%; padding: 14px; font-size: 15px; }
+  .b-all:disabled { opacity: .4; }
+  .hint {
+    background: rgba(244,125,49,.1); border-radius: 12px; padding: 12px 14px;
+    font-size: 13px; color: var(--ink); line-height: 1.55; margin-bottom: 18px;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Ad voiceover booth<span>.</span></h1>
+  <p class="sub">Same drill as the app recorder: click a line (or use ↑↓), press <b>space</b> to start and stop, it plays back automatically. Re-record until it feels right, then download the WAVs and drop them into CapCut at the timestamps shown.</p>
+  <div class="hint">
+    🎙️ Use the same room, mic and distance as your app recordings — the ad voice and the in-app voice should be indistinguishable. Warm, close, unhurried. You're talking to one anxious person, not a crowd.
+  </div>
+  <div class="toolbar"><button class="b-all" id="dl-all" disabled>Download all recorded lines</button></div>
+  <div id="lines"></div>
+</div>
+
+<script>
+"use strict";
+const LINES = [
+  { id: "mind", tag: "BOTH · 0.2s (over the hook card)", text: "Mind won't stop?",
+    note: "THE HOOK — the whole product in three words. Quiet, intimate, like you caught them mid-spiral and you get it. A question to one person, never an announcement. No pity, no salesman." },
+  { id: "welcome", tag: "BOTH · 1.2s (over the invitation card)", text: "Hey. Welcome to Settle. Try this with me.",
+    note: "The Headspace warmth, compressed: 2.5 seconds max. The card on screen says 'Try this with me.' — your voice and the text land the same words together. Land 'Settle' clearly." },
+  { id: "calf-dare", tag: "CALF · 2.9s (over the follow-along start)", text: "Lift your heels off the floor. Slow. Nobody will notice.",
+    note: "The instruction — spoken while the character demonstrates on screen. Conspiratorial, almost a whisper with a smile. Land 'nobody will notice' like a secret." },
+  { id: "calf-mid", tag: "CALF · 5.8s", text: "Up… and down. Feel the pump?",
+    note: "Coaching cadence, matched to the reps: 'up' rises, 'down' falls. The question stays HANGING — no answer here; the reveal answers it ('Blood moving. Mind settling.'). If you already recorded the longer take, trim it after 'pump?'." },
+  { id: "almost", tag: "BOTH · 10.8s", text: "Almost there.",
+    note: "Two words, warm. A nod, not an announcement." },
+  { id: "calf-reveal", tag: "CALF · 13.8s", text: "Blood moving. Mind settling.",
+    note: "The payoff — the ANSWER only. The 'Feel that?' slide sits silent for a beat (screen asks, viewer feels), then your voice answers. Slow. 'Settling' lands softly — it's the brand name, let it breathe. (If you already recorded the old 'Feel that?…' take, just trim the question off in CapCut.)" },
+  { id: "close", tag: "BOTH · 16.2s", text: "Settle. Sixty-second movement snacks, matched to how you feel. Try one free.",
+    note: "The sign-off. 'Settle' alone, then a beat, then the pitch in one easy breath. Friendly, zero salesman." },
+  { id: "drums-dare", tag: "DRUMS · 2.9s (over the follow-along start)", text: "Drum your heels, fast as you can. Quietly.",
+    note: "The instruction, spoken while the character demonstrates. More energy than the calf line — this one's for the wired crowd. 'Quietly' with a grin." },
+  { id: "drums-mid", tag: "DRUMS · 5.8s", text: "Keep going. Give the buzz somewhere to go.",
+    note: "Urging, but never shouting. Think coach leaning in, not bootcamp." },
+  { id: "drums-reveal", tag: "DRUMS · 13.8s", text: "That's the buzz leaving.",
+    note: "Same silent-beat treatment as the calf reveal: the slide asks 'Feel that?', your voice only answers. Satisfied, not selling." },
+];
+
+const takes = {};   // id -> AudioBuffer
+let ctx, stream, rec, chunks, activeIdx = 0, recording = false;
+
+const list = document.getElementById("lines");
+LINES.forEach((l, i) => {
+  const c = document.createElement("div");
+  c.className = "card"; c.id = "c-" + l.id;
+  c.innerHTML = "<div class='tagline'>" + l.tag + "</div>" +
+    "<div class='text'>" + l.text + "</div>" +
+    "<div class='note'>" + l.note + "</div>" +
+    "<div class='row'>" +
+      "<button class='b-rec' data-i='" + i + "'>● Record</button>" +
+      "<button class='b-play' data-i='" + i + "' disabled>▶ Play</button>" +
+      "<button class='b-dl' data-i='" + i + "' disabled>↓ WAV</button>" +
+      "<span class='len' id='len-" + l.id + "'></span>" +
+    "</div>";
+  c.onclick = () => setActive(i);
+  list.appendChild(c);
+});
+function setActive(i) {
+  activeIdx = i;
+  document.querySelectorAll(".card").forEach((c, j) => c.classList.toggle("active", j === i));
+  document.getElementById("c-" + LINES[i].id).scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+setActive(0);
+
+async function ensureMic() {
+  if (stream) return;
+  ctx = ctx || new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 48000 });
+  stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+}
+
+async function toggleRecord(i) {
+  await ensureMic();
+  const btn = document.querySelector(".b-rec[data-i='" + i + "']");
+  if (!recording) {
+    chunks = [];
+    rec = new MediaRecorder(stream);
+    rec.ondataavailable = e => chunks.push(e.data);
+    rec.onstop = async () => {
+      const buf = await new Blob(chunks).arrayBuffer();
+      let audio = await ctx.decodeAudioData(buf);
+      audio = trim(normalize(audio));
+      takes[LINES[i].id] = audio;
+      markDone(i, audio);
+      play(i);
+    };
+    rec.start();
+    recording = true;
+    btn.textContent = "■ Stop"; btn.classList.add("recording");
+  } else {
+    rec.stop();
+    recording = false;
+    btn.textContent = "● Record"; btn.classList.remove("recording");
+  }
+}
+
+/* peak-normalize to -3 dB, then trim silence (threshold) with tiny fades — same
+   philosophy as the app's voice pack so the ad VO matches it in level */
+function normalize(a) {
+  let peak = 0;
+  for (let c = 0; c < a.numberOfChannels; c++) {
+    const d = a.getChannelData(c);
+    for (let i = 0; i < d.length; i++) peak = Math.max(peak, Math.abs(d[i]));
+  }
+  const g = peak > 0 ? Math.pow(10, -3 / 20) / peak : 1;
+  for (let c = 0; c < a.numberOfChannels; c++) {
+    const d = a.getChannelData(c);
+    for (let i = 0; i < d.length; i++) d[i] *= g;
+  }
+  return a;
+}
+function trim(a) {
+  const d = a.getChannelData(0), sr = a.sampleRate, th = 0.012;
+  let s = 0, e = d.length - 1;
+  while (s < d.length && Math.abs(d[s]) < th) s++;
+  while (e > s && Math.abs(d[e]) < th) e--;
+  s = Math.max(0, s - sr * 0.06); e = Math.min(d.length, e + sr * 0.15);
+  const out = ctx.createBuffer(1, e - s, sr), o = out.getChannelData(0);
+  for (let i = 0; i < o.length; i++) o[i] = d[s + i];
+  const f = Math.floor(sr * 0.012);
+  for (let i = 0; i < f && i < o.length; i++) { o[i] *= i / f; o[o.length - 1 - i] *= i / f; }
+  return out;
+}
+
+function play(i) {
+  const a = takes[LINES[i].id];
+  if (!a) return;
+  const src = ctx.createBufferSource();
+  src.buffer = a; src.connect(ctx.destination); src.start();
+}
+function markDone(i, audio) {
+  const id = LINES[i].id;
+  document.getElementById("c-" + id).classList.add("done");
+  document.querySelector(".b-play[data-i='" + i + "']").disabled = false;
+  document.querySelector(".b-dl[data-i='" + i + "']").disabled = false;
+  document.getElementById("len-" + id).textContent = audio.duration.toFixed(1) + "s";
+  document.getElementById("dl-all").disabled = false;
+}
+
+function wavBlob(a) {
+  const d = a.getChannelData(0), n = d.length, sr = a.sampleRate;
+  const buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+  const W = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  W(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); W(8, "WAVEfmt ");
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  W(36, "data"); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, d[i])) * 32767, true);
+  return new Blob([buf], { type: "audio/wav" });
+}
+function download(i) {
+  const id = LINES[i].id, a = takes[id];
+  if (!a) return;
+  const u = URL.createObjectURL(wavBlob(a)), el = document.createElement("a");
+  el.href = u; el.download = "advo_" + id + ".wav"; el.click();
+  setTimeout(() => URL.revokeObjectURL(u), 4000);
+}
+
+document.querySelectorAll(".b-rec").forEach(b => b.onclick = e => { e.stopPropagation(); setActive(+b.dataset.i); toggleRecord(+b.dataset.i); });
+document.querySelectorAll(".b-play").forEach(b => b.onclick = e => { e.stopPropagation(); play(+b.dataset.i); });
+document.querySelectorAll(".b-dl").forEach(b => b.onclick = e => { e.stopPropagation(); download(+b.dataset.i); });
+document.getElementById("dl-all").onclick = () => {
+  LINES.forEach((l, i) => { if (takes[l.id]) setTimeout(() => download(i), i * 350); });
+};
+
+document.addEventListener("keydown", e => {
+  if (e.code === "Space") { e.preventDefault(); toggleRecord(activeIdx); }
+  if (e.code === "ArrowDown") { e.preventDefault(); setActive(Math.min(LINES.length - 1, activeIdx + 1)); }
+  if (e.code === "ArrowUp") { e.preventDefault(); setActive(Math.max(0, activeIdx - 1)); }
+});
+</script>
+</body>
+</html>

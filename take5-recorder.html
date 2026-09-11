@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Take·5 booth — Day 1 · Unclench</title>
+<style>
+  :root{
+    --cream:#FDF6EC; --ink:#2E2A26; --soft:#6E655C;
+    --orange:#F0873E; --orange-d:#D96F27; --green:#4E9A6A; --red:#C6553F;
+    --line:#E6DACA;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--cream); color:var(--ink);
+    font:16px/1.5 ui-rounded, "SF Pro Rounded", "Nunito", system-ui, -apple-system, sans-serif;
+    display:flex; flex-direction:column; min-height:100%;
+  }
+  header{
+    padding:14px 20px; border-bottom:1px solid var(--line);
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  }
+  .brand{font-weight:800; letter-spacing:.02em}
+  .brand span{color:var(--orange)}
+  .pill{
+    border:1px solid var(--line); background:#fff; border-radius:999px;
+    padding:5px 12px; font-size:13px; color:var(--soft); cursor:pointer;
+  }
+  .pill.sel{background:var(--ink); color:var(--cream); border-color:var(--ink)}
+  .grow{flex:1}
+  .meter{width:120px;height:8px;background:#EFE4D5;border-radius:99px;overflow:hidden}
+  .meter i{display:block;height:100%;width:0%;background:var(--green);transition:width .06s linear}
+  button{
+    font:inherit; font-weight:700; border:none; border-radius:999px; cursor:pointer;
+    padding:11px 22px; background:var(--orange); color:#fff;
+  }
+  button:disabled{opacity:.4; cursor:default}
+  button.ghost{background:transparent;color:var(--soft);border:1px solid var(--line);font-weight:600}
+  button.dark{background:var(--ink)}
+
+  main{flex:1; display:flex; min-height:0}
+
+  /* ---------- stage ---------- */
+  .stage{
+    flex:1; position:relative; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; padding:32px; min-width:0;
+    container-type:size;
+  }
+  .clock{
+    position:absolute; top:16px; left:50%; transform:translateX(-50%);
+    font-variant-numeric:tabular-nums; font-size:13px; color:var(--soft); letter-spacing:.06em;
+  }
+  .recdot{
+    position:absolute; top:14px; right:20px; display:flex; align-items:center; gap:8px;
+    font-size:13px; color:var(--red); font-weight:700; opacity:0; transition:opacity .2s;
+  }
+  .recdot.on{opacity:1}
+  .recdot b{width:10px;height:10px;border-radius:99px;background:var(--red);display:block;
+    animation:blink 1.1s infinite}
+  @keyframes blink{50%{opacity:.25}}
+
+  .cue{max-width:760px; text-align:center; min-height:220px; display:flex;
+       flex-direction:column; align-items:center; justify-content:center; gap:18px}
+  .line{font-size:34px; line-height:1.35; font-weight:700; letter-spacing:-.01em}
+  .line.big{font-size:52px}
+  .line.whisper{font-size:26px; font-weight:500; font-style:italic; color:var(--soft)}
+  .line.orb{font-size:30px; font-weight:600; color:var(--orange-d)}
+  .line .w{display:inline-block; opacity:0; transform:translateY(6px);
+           transition:opacity .28s ease, transform .28s ease}
+  .line .w.pop{opacity:1; transform:none}
+  .silentTag{font-size:13px; color:var(--soft); letter-spacing:.08em; text-transform:uppercase}
+
+  .window{width:min(760px,100%);}
+  .wbar{height:10px;background:#EFE4D5;border-radius:99px;overflow:hidden}
+  .wbar{position:relative}
+  .wbar i{display:block;height:100%;width:0%;background:var(--orange);transition:width .1s linear;position:relative;z-index:2}
+  .wbar u{position:absolute;top:0;bottom:0;left:0;background:#F7E3CD;z-index:1}
+  .wbar s{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);opacity:.55;z-index:3}
+  .wbar.over i{background:var(--red)}
+  .wbar.pre i{background:#C8BCAC}
+  .wmeta{display:flex;justify-content:space-between;font-size:13px;color:var(--soft);margin-top:7px;
+         font-variant-numeric:tabular-nums}
+  .next{margin-top:26px;font-size:15px;color:var(--soft);text-align:center;max-width:700px}
+  .next b{color:var(--ink);font-weight:600}
+
+  .controls{position:absolute;bottom:24px;left:0;right:0;display:flex;gap:12px;
+            justify-content:center;align-items:center;flex-wrap:wrap;padding:0 20px}
+  .hint{font-size:13px;color:var(--soft);text-align:center;width:100%;margin-top:4px}
+
+  .countdown{font-size:120px;font-weight:800;color:var(--orange)}
+
+  /* ---------- side list ---------- */
+  aside{
+    width:340px; border-left:1px solid var(--line); background:#fff;
+    display:flex; flex-direction:column; min-height:0;
+  }
+  .asideHead{padding:14px 16px;border-bottom:1px solid var(--line);font-weight:700;font-size:14px;
+    display:flex;align-items:center;gap:8px}
+  .rows{overflow:auto;flex:1}
+  .row{padding:10px 16px;border-bottom:1px solid #F3EBE0;display:flex;gap:10px;cursor:pointer;
+       align-items:flex-start;font-size:13.5px}
+  .row:hover{background:#FFFBF5}
+  .row.cur{background:#FFF3E6}
+  .row .t{color:var(--soft);font-variant-numeric:tabular-nums;min-width:44px}
+  .row .x{flex:1}
+  .row .st{font-size:11px;font-weight:800;letter-spacing:.05em;padding:2px 7px;border-radius:99px;
+    background:#EFE4D5;color:var(--soft);white-space:nowrap}
+  .row .st.ok{background:#E1F0E6;color:var(--green)}
+  .row .st.over{background:#F8E2DC;color:var(--red)}
+  .asideFoot{padding:14px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+
+  .note{font-size:12.5px;color:var(--soft);line-height:1.45}
+  a{color:var(--orange-d)}
+  @media (max-width:900px){ main{flex-direction:column} aside{width:auto;border-left:none;border-top:1px solid var(--line);max-height:40vh} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Take·<span>5</span> booth</div>
+  <div class="pill sel" id="mFull">Full take</div>
+  <div class="pill" id="mLine">Line by line</div>
+  <div class="pill" id="mAd">Ad cut</div>
+  <div class="grow"></div>
+  <div class="meter" title="mic level"><i id="lvl"></i></div>
+  <button class="ghost" id="micBtn">Enable mic</button>
+</header>
+
+<main>
+  <section class="stage">
+    <div class="clock" id="clock">0:00.0 / 2:58</div>
+    <div class="recdot" id="recdot"><b></b> REC</div>
+
+    <div class="cue">
+      <div class="line" id="line"></div>
+      <div class="silentTag" id="silentTag" style="display:none">no voice — orb only</div>
+    </div>
+
+    <div class="window">
+      <div class="wbar" id="wbar"><u id="wspeak"></u><s id="wmark"></s><i></i></div>
+      <div class="wmeta"><span id="wleft">—</span><span id="wtot">—</span></div>
+    </div>
+
+    <div class="next" id="next"></div>
+
+    <div class="controls">
+      <button id="go">Rehearse</button>
+      <button class="dark" id="rec">Record</button>
+      <button class="ghost" id="play" disabled>Play back</button>
+      <button class="ghost" id="stop" disabled>Stop</button>
+      <button class="ghost" id="dl" disabled>Download WAV</button>
+      <div class="hint" id="hint">Space = start / stop · R = restart · ↑↓ = pick a line (line mode)</div>
+    </div>
+  </section>
+
+  <aside>
+    <div class="asideHead"><span id="listTitle">Day 1 · Unclench</span></div>
+    <div class="rows" id="rows"></div>
+    <div class="asideFoot">
+      <div class="note" id="foot">
+        Lines appear <b>0.8s early</b> so your read-then-speak lands on the beat. <b>Full take</b> is the one that matters — the master (<code>take5-day1.html</code>) plays a single
+        <code>d1_full.wav</code> from t=0, so recording in one pass against the moving words means the sync
+        is right by construction. Line mode is for punching in a single line you want to redo.
+      </div>
+    </div>
+  </aside>
+</main>
+
+<script>
+/* ============================================================
+   BEAT TABLES — these times ARE the video's times.
+   Keep in sync with take5-day1.html BEATS_LESSON / BEATS_AD.
+   kind: 'say' (voice) | 'silent' (on-screen only) | 'hold' (deliberate nothing)
+   ============================================================ */
+const LESSON = [
+  {t:0.3,   id:'t1',   cls:'big',      text:'Day one. Unclench.'},
+  {t:4.5,   id:'t2',   cls:'',         text:'Take five. Sit tall. Feel your feet on the floor.'},
+  {t:10.9,  id:'t3',   cls:'',         text:'Let your hands rest. One slow breath.'},
+  {t:15.5,  id:'b1',  cls:'orb',     text:'breathe in', kind:'silent'},
+  {t:19.5,  id:'b2',  cls:'orb',     text:'breathe out, slow', kind:'silent'},
+  {t:26.2,  id:'t4',   cls:'',         text:'Fingertips to the corners of your jaw, just in front of your ears.'},
+  {t:33.1,  id:'t5',   cls:'',         text:'Now clench your teeth, gently. Feel that small bulge under your fingertips?'},
+  {t:40.1,  id:'t6',   cls:'',         text:'That\u2019s the masseter.'},
+  {t:43.5,  id:'t9',   cls:'',         text:'This one muscle gets more of your brain\u2019s attention than your entire back does. So it\u2019s a shortcut to relaxation.'},
+  {t:53.7,  id:'t10',  cls:'',         text:'And unclench. Feel it soften. Just let it go.'},
+  {t:59.7,  id:'t11',  cls:'',         text:'Let\u2019s begin.'},
+  {t:63.3,  id:'c1',   cls:'',         text:'Small, slow circles. Both sides. No hurry.'},
+  {t:73.8,  id:'c2',   cls:'',         text:'If you find a tender spot, stay with it. Gentle.'},
+  {t:84.3,  id:'c3',   cls:'',         text:'Now circle the other way.'},
+  {t:94.3,  id:'c4',   cls:'',         text:'If it feels nice, let your eyes close.'},
+  {t:104.3, id:'w1',   cls:'whisper',  text:'( just keep breathing. slow and easy )'},
+  {t:114.3, id:'c5',   cls:'',         text:'Now let the hands rest. Teeth apart. Lips closed.'},
+  {t:124.8, id:'c6',   cls:'',         text:'Let the tongue rest low. The jaw just hangs.'},
+  {t:135.3, id:'c7',   cls:'',         text:'One more slow breath, out through the nose.'},
+  {t:145.3, id:'s1',   cls:'whisper',  text:'( now be still a moment. just notice what\u2019s humming )'},
+  {t:151.0, id:'hold',cls:'orb',     text:'\u00b7 \u00b7 \u00b7', kind:'hold'},
+  {t:156.0, id:'e1',   cls:'',         text:'Notice how much you were holding.'},
+  {t:161.5, id:'e2',   cls:'',         text:'So from now on: at a red light, or a loading screen. Teeth apart, jaw relaxed. That\u2019s your cue now.'},
+  {t:172.5, id:'e3',   cls:'',         text:'That\u2019s day one. See you tomorrow.'},
+  {t:178.0, id:'end', cls:'orb',     text:'\u2014 end \u2014', kind:'hold'}
+];
+
+const AD = [
+  {t:0.3, id:'a1', cls:'big', text:'Try clenching your teeth. Gently.'},
+  {t:4.3, id:'a2', cls:'', text:'Feel that, just below your ears?'},
+  {t:8.0, id:'a3', cls:'', text:"That bulging muscle? That's your masseter."},
+  {t:12.0, id:'a4', cls:'', text:"Let's relax it together."},
+  {t:15.0, id:'a5', cls:'', text:'Small, slow circles. Both sides.'},
+  {t:20.0, id:'aw', cls:'whisper', text:'( gentle. keep breathing )'},
+  {t:23.5, id:'a6', cls:'', text:'Now let it hang. Teeth apart, lips closed.'},
+  {t:28.5, id:'a7', cls:'', text:'Notice how much you were holding.'},
+  {t:32.0, id:'a8', cls:'', text:"That's day one. There are four more."},
+  {t:36.0, id:'end', cls:'orb', text:'\u2014 end card \u2014', kind:'hold'}
+];
+
+/* ============================================================ */
+const $ = s => document.querySelector(s);
+const lineEl=$('#line'), silentTag=$('#silentTag'), clockEl=$('#clock'),
+      wbar=$('#wbar'), wbarI=wbar.querySelector('i'), wleft=$('#wleft'), wtot=$('#wtot'),
+      nextEl=$('#next'), rowsEl=$('#rows'), recdot=$('#recdot'), hint=$('#hint'),
+      listTitle=$('#listTitle');
+const btnGo=$('#go'), btnRec=$('#rec'), btnPlay=$('#play'), btnStop=$('#stop'), btnDl=$('#dl'),
+      micBtn=$('#micBtn'), lvl=$('#lvl');
+
+const LEADIN = 0.8;   // words appear this early — start speaking as the bar starts
+let MODE='full';            // 'full' | 'line' | 'ad'
+let BEATS = LESSON;
+let curIdx = 0;             // line mode: which beat
+let running=false, recording=false, rafId=null, t0=0, beatPtr=0;
+let stream=null, ac=null, analyser=null, mediaRec=null, chunks=[], recStartMs=0, clockZeroMs=0;
+let lastBuffer=null, lastName='d1_full.wav';
+const takes = {};           // id -> {buffer, dur, window, over}
+
+// Estimated speaking time for a line. The word-pop is spread across THIS, and the
+// bar shows the speak zone vs the quiet zone — so you can see where to stop talking.
+function speechDur(t, cls){
+  const x = t.replace(/[()]/g,'').trim();
+  const w = x.split(/\s+/).filter(Boolean).length;
+  const rate = cls==='big' ? 1.6 : cls==='whisper' ? 2.0 : 2.35;
+  return w/rate + (x.match(/[.!?]/g)||[]).length*0.42 + (x.match(/[,;:]/g)||[]).length*0.18;
+}
+const fmt = s => { s=Math.max(0,s); const m=Math.floor(s/60); return m+':'+String(Math.floor(s%60)).padStart(2,'0')+'.'+Math.floor((s*10)%10); };
+const fmtS = s => { const m=Math.floor(s/60); return m+':'+String(Math.round(s%60)).padStart(2,'0'); };
+const total = () => BEATS[BEATS.length-1].t;
+const win = i => (i<BEATS.length-1 ? BEATS[i+1].t - BEATS[i].t : 4);
+let _paintIdx = 0;
+const curWindow = () => win(_paintIdx);
+
+/* ---------------- mic ---------------- */
+async function initMic(){
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({audio:{
+      echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:1
+    }});
+    ac = ac || new (window.AudioContext||window.webkitAudioContext)();
+    const src = ac.createMediaStreamSource(stream);
+    analyser = ac.createAnalyser(); analyser.fftSize=1024; src.connect(analyser);
+    micBtn.textContent='Mic ready'; micBtn.disabled=true;
+    meterLoop();
+  }catch(e){ alert('Mic blocked: '+e.message); }
+}
+function meterLoop(){
+  const buf = new Float32Array(analyser.fftSize);
+  (function tick(){
+    analyser.getFloatTimeDomainData(buf);
+    let p=0; for(let i=0;i<buf.length;i++) p=Math.max(p,Math.abs(buf[i]));
+    lvl.style.width = Math.min(100, p*140)+'%';
+    lvl.style.background = p>0.92 ? 'var(--red)' : (p>0.12 ? 'var(--green)' : '#C8BCAC');
+    requestAnimationFrame(tick);
+  })();
+}
+micBtn.onclick = initMic;
+
+/* ---------------- text pop ---------------- */
+function paint(beat, idx){
+  if(typeof idx === "number") _paintIdx = idx;
+  lineEl.className = 'line '+(beat.cls||'');
+  lineEl.innerHTML='';
+  const words = beat.text.split(' ');
+  // last word lands as the line finishes being spoken
+  const gap = words.length>1 ? Math.max(0.05,(speechDur(beat.text,beat.cls)-0.30)/(words.length-1)) : 0;
+  words.forEach((w,i)=>{
+    const sp=document.createElement('span'); sp.className='w'; sp.textContent=w+(i<words.length-1?' ':'');
+    lineEl.appendChild(sp);
+    setTimeout(()=>sp.classList.add('pop'), i*gap*1000);
+  });
+  // paint the speak-zone marker for this beat
+  const _w = curWindow(), _sd = (beat.kind==='silent'||beat.kind==='hold') ? 0 : speechDur(beat.text,beat.cls);
+  const _pct = Math.min(100, (_sd/_w)*100);
+  document.getElementById('wspeak').style.width = _pct+'%';
+  document.getElementById('wmark').style.left = _pct+'%';
+  document.getElementById('wmark').style.display = _sd ? 'block' : 'none';
+  silentTag.style.display = beat.kind==='silent' ? 'block' : 'none';
+  if(beat.kind==='hold') silentTag.style.display='block', silentTag.textContent='hold — say nothing';
+  else if(beat.kind==='silent') silentTag.textContent='no voice — orb only';
+}
+
+/* ---------------- list ---------------- */
+function buildRows(){
+  rowsEl.innerHTML='';
+  BEATS.forEach((b,i)=>{
+    if(b.kind==='hold') return;
+    const r=document.createElement('div'); r.className='row'; r.dataset.i=i;
+    const st=takes[b.id];
+    r.innerHTML = '<span class="t">'+fmtS(b.t)+'</span><span class="x">'+b.text+'</span>'+
+      '<span class="st '+(st?(st.over?'over':'ok'):'')+'">'+
+      (st ? (st.dur.toFixed(1)+'s')
+          : (b.kind==='silent'||b.kind==='hold' ? win(i).toFixed(1)+'s'
+             : speechDur(b.text,b.cls).toFixed(1)+'s say')) + '</span>';
+    r.onclick=()=>{ if(MODE==='line'){ curIdx=i; showLine(); } };
+    rowsEl.appendChild(r);
+  });
+  markCur();
+}
+function markCur(){
+  [...rowsEl.children].forEach(r=>r.classList.toggle('cur', +r.dataset.i===curIdx));
+}
+
+/* ---------------- FULL / AD timeline ---------------- */
+function startTimeline(isRec){
+  running=true; beatPtr=0; t0=performance.now();
+  clockZeroMs = t0;
+  btnGo.disabled=true; btnRec.disabled=true; btnStop.disabled=false; btnPlay.disabled=true;
+  recdot.classList.toggle('on', !!isRec);
+  loop();
+}
+function loop(){
+  const t=(performance.now()-t0)/1000;
+  while(beatPtr<BEATS.length && t>=BEATS[beatPtr].t-LEADIN){
+    curIdx=beatPtr; paint(BEATS[beatPtr], beatPtr); markCur();
+    const nb=BEATS[beatPtr+1];
+    nextEl.innerHTML = nb ? 'next &nbsp;<b>'+nb.text+'</b>' : '';
+    beatPtr++;
+  }
+  const i=Math.max(0,curIdx), w=win(i), inW=t-BEATS[i].t, left=w-inW;
+  wbar.classList.toggle('pre', inW<0);
+  wbarI.style.width = Math.min(100, (inW/w)*100)+'%';
+  wbar.classList.toggle('over', left<0);
+  const sd = (BEATS[i].kind==='silent'||BEATS[i].kind==='hold') ? 0 : speechDur(BEATS[i].text, BEATS[i].cls);
+  if(inW < 0){ wleft.textContent = 'get ready — '+(-inW).toFixed(1)+'s'; wtot.textContent = sd ? 'say ~'+sd.toFixed(1)+'s' : ''; }
+  else wleft.textContent = inW < sd ? 'speaking — '+(sd-inW).toFixed(1)+'s of line left'
+                    : (left>=0 ? 'let it breathe — '+left.toFixed(1)+'s of quiet' : 'over by '+(-left).toFixed(1)+'s');
+  wtot.textContent = sd ? 'say ~'+sd.toFixed(1)+'s · quiet '+(w-sd).toFixed(1)+'s' : w.toFixed(1)+'s window';
+  clockEl.textContent = fmt(t)+' / '+fmtS(total());
+  if(t>=total()+1.5){ stopAll(); return; }
+  rafId=requestAnimationFrame(loop);
+}
+
+/* ---------------- LINE mode ---------------- */
+function showLine(){
+  const b=BEATS[curIdx];
+  paint(b, curIdx); markCur();
+  const w=win(curIdx);
+  wbarI.style.width='0%'; wbar.classList.remove('over');
+  wtot.textContent=w.toFixed(1)+'s window';
+  const st=takes[b.id];
+  wleft.textContent = st ? ('last take '+st.dur.toFixed(1)+'s'+(st.over?' — over':' — fits')) : 'not recorded yet';
+  const nb=BEATS[curIdx+1];
+  nextEl.innerHTML = nb ? 'next &nbsp;<b>'+nb.text+'</b>' : '';
+  clockEl.textContent = 'line '+(curIdx+1)+' of '+BEATS.length+' · starts '+fmtS(b.t);
+  btnPlay.disabled = !st;
+  btnDl.disabled = !st;
+}
+function startLineRec(){
+  running=true; t0=performance.now();
+  const b=BEATS[curIdx], w=win(curIdx);
+  paint(b, curIdx);
+  recdot.classList.add('on');
+  btnRec.disabled=true; btnStop.disabled=false; btnGo.disabled=true;
+  (function tick(){
+    if(!running) return;
+    const t=(performance.now()-t0)/1000, left=w-t;
+    wbarI.style.width=Math.min(100,(t/w)*100)+'%';
+    wbar.classList.toggle('over', left<0);
+    wleft.textContent = left>=0? left.toFixed(1)+'s left' : 'over by '+(-left).toFixed(1)+'s';
+    clockEl.textContent = fmt(t);
+    rafId=requestAnimationFrame(tick);
+  })();
+}
+
+/* ---------------- recording ---------------- */
+async function beginRecord(){
+  if(!stream){ await initMic(); if(!stream) return; }
+  chunks=[];
+  const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : '';
+  mediaRec = new MediaRecorder(stream, mime?{mimeType:mime}:undefined);
+  mediaRec.ondataavailable = e => { if(e.data.size) chunks.push(e.data); };
+  mediaRec.onstop = finishRecord;
+  await new Promise(res=>{ mediaRec.onstart=()=>{ recStartMs=performance.now(); res(); }; mediaRec.start(); });
+  recording=true;
+
+  if(MODE==='line'){ startLineRec(); return; }
+
+  // 3-second recorded countdown so the head trim is exact
+  let n=3;
+  lineEl.className='line'; nextEl.innerHTML='';
+  const cd=()=>{ lineEl.innerHTML='<span class="countdown">'+n+'</span>'; };
+  cd();
+  const iv=setInterval(()=>{
+    n--; if(n>0){ cd(); }
+    else { clearInterval(iv); startTimeline(true); }
+  },1000);
+}
+
+function stopAll(){
+  running=false; cancelAnimationFrame(rafId);
+  recdot.classList.remove('on');
+  btnStop.disabled=true; btnGo.disabled=false; btnRec.disabled=false;
+  if(recording && mediaRec && mediaRec.state!=='inactive'){ mediaRec.stop(); recording=false; }
+  else { btnPlay.disabled = !lastBuffer; }
+}
+
+async function finishRecord(){
+  const blob = new Blob(chunks, {type: chunks[0]?.type || 'audio/webm'});
+  const arr = await blob.arrayBuffer();
+  ac = ac || new (window.AudioContext||window.webkitAudioContext)();
+  const buf = await ac.decodeAudioData(arr);
+
+  if(MODE==='line'){
+    const b=BEATS[curIdx], w=win(curIdx);
+    const trimmed = trimSilence(buf, ac);
+    takes[b.id]={buffer:trimmed, dur:trimmed.duration, window:w, over:trimmed.duration>w};
+    lastBuffer=trimmed; lastName='d1_'+b.id+'.wav';
+    buildRows(); showLine();
+    btnPlay.disabled=false; btnDl.disabled=false;
+    return;
+  }
+
+  // full / ad: slice off the countdown so sample 0 == video t=0
+  const headSec = Math.max(0, (clockZeroMs - recStartMs)/1000);
+  const start = Math.floor(headSec*buf.sampleRate);
+  const len = buf.length-start;
+  const out = ac.createBuffer(1, Math.max(1,len), buf.sampleRate);
+  out.copyToChannel(buf.getChannelData(0).slice(start), 0);
+  lastBuffer = normalize(out);
+  lastName = MODE==='ad' ? 'd1_ad.wav' : 'd1_full.wav';
+  btnPlay.disabled=false; btnDl.disabled=false;
+  hint.textContent = 'Recorded '+fmt(lastBuffer.duration)+' · aligned to t=0 · save as voice/take5/'+lastName;
+}
+
+/* ---------------- audio utils ---------------- */
+function normalize(buf, peakDb=-3){
+  const d=buf.getChannelData(0); let p=0;
+  for(let i=0;i<d.length;i++) p=Math.max(p,Math.abs(d[i]));
+  if(p>0){ const g=Math.pow(10,peakDb/20)/p; for(let i=0;i<d.length;i++) d[i]*=g; }
+  return buf;
+}
+function trimSilence(buf, ctx, thr=0.012, padSec=0.06){
+  const d=buf.getChannelData(0), sr=buf.sampleRate;
+  let s=0, e=d.length-1;
+  while(s<d.length && Math.abs(d[s])<thr) s++;
+  while(e>s && Math.abs(d[e])<thr) e--;
+  s=Math.max(0,s-Math.floor(padSec*sr)); e=Math.min(d.length-1,e+Math.floor(padSec*sr));
+  const out=ctx.createBuffer(1, Math.max(1,e-s), sr);
+  out.copyToChannel(d.slice(s,e),0);
+  // gentle 12ms fades to kill clicks
+  const o=out.getChannelData(0), f=Math.floor(sr*0.012);
+  for(let i=0;i<f && i<o.length;i++){ o[i]*=i/f; o[o.length-1-i]*=i/f; }
+  return normalize(out);
+}
+function toWav(buf){
+  const d=buf.getChannelData(0), sr=buf.sampleRate, n=d.length;
+  const ab=new ArrayBuffer(44+n*2), v=new DataView(ab);
+  const W=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+  W(0,'RIFF'); v.setUint32(4,36+n*2,true); W(8,'WAVE'); W(12,'fmt ');
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
+  W(36,'data'); v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++){ let s=Math.max(-1,Math.min(1,d[i])); v.setInt16(44+i*2, s<0?s*0x8000:s*0x7FFF, true); }
+  return new Blob([ab],{type:'audio/wav'});
+}
+
+/* ---------------- playback ---------------- */
+let srcNode=null;
+function playBack(){
+  if(!lastBuffer) return;
+  ac = ac || new (window.AudioContext||window.webkitAudioContext)();
+  if(srcNode){ try{srcNode.stop()}catch(e){} }
+  srcNode = ac.createBufferSource(); srcNode.buffer=lastBuffer; srcNode.connect(ac.destination);
+  if(MODE==='line'){ paint(BEATS[curIdx]); srcNode.start(); return; }
+  srcNode.start();
+  startTimeline(false);   // replay the words against the take so you can see the fit
+}
+
+/* ---------------- wiring ---------------- */
+btnGo.onclick   = ()=>{ if(MODE==='line'){ showLine(); } else { startTimeline(false); } };
+btnRec.onclick  = beginRecord;
+btnStop.onclick = stopAll;
+btnPlay.onclick = playBack;
+btnDl.onclick   = ()=>{
+  if(!lastBuffer) return;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(toWav(lastBuffer)); a.download=lastName; a.click();
+};
+
+function setMode(m){
+  stopAll();
+  MODE=m; BEATS = (m==='ad')?AD:LESSON; curIdx=0; lastBuffer=null;
+  $('#mFull').classList.toggle('sel', m==='full');
+  $('#mLine').classList.toggle('sel', m==='line');
+  $('#mAd').classList.toggle('sel', m==='ad');
+  listTitle.textContent = m==='ad' ? 'Ad cut · ~35s plan' : 'Day 1 · Unclench · 2:58';
+  btnGo.textContent = m==='line' ? 'Show line' : 'Rehearse';
+  btnPlay.disabled=true; btnDl.disabled=true;
+  buildRows();
+  if(m==='line'){ showLine(); hint.textContent='Line mode: ↑↓ pick a line, Space records it. The bar shows the window that line has in the video.'; }
+  else { paint({cls:'orb',text:'ready',kind:'hold'}); silentTag.style.display='none';
+         clockEl.textContent='0:00.0 / '+fmtS(total());
+         nextEl.innerHTML='<b>'+BEATS[0].text+'</b> opens the take';
+         wbarI.style.width='0%'; wleft.textContent='—'; wtot.textContent='—';
+         hint.textContent='Space = record · each line appears 0.8s early — begin as the bar starts moving · R = rehearse first, no recording'; }
+}
+$('#mFull').onclick=()=>setMode('full');
+$('#mLine').onclick=()=>setMode('line');
+$('#mAd').onclick=()=>setMode('ad');
+
+document.addEventListener('keydown', e=>{
+  if(e.code==='Space'){ e.preventDefault(); running? stopAll() : beginRecord(); }
+  else if(e.key==='r'||e.key==='R'){ e.preventDefault(); if(!running) btnGo.click(); }
+  else if(MODE==='line' && (e.key==='ArrowDown'||e.key==='ArrowUp')){
+    e.preventDefault();
+    let i=curIdx + (e.key==='ArrowDown'?1:-1);
+    while(i>=0 && i<BEATS.length && BEATS[i].kind==='hold') i += (e.key==='ArrowDown'?1:-1);
+    if(i>=0 && i<BEATS.length){ curIdx=i; showLine(); }
+  }
+});
+
+setMode('full');
+</script>
+</body>
+</html>

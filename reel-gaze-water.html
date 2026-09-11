@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Settle reel master — the far look (water gaze)</title>
+<style>
+  :root {
+    --ink: #2b2320;
+    --cream: #fdf6ec;
+    --orange: #f47b3f;
+    --orange-deep: #e05f1f;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: #101614; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center;
+         font-family: ui-rounded, "SF Pro Rounded", "Nunito", "Quicksand", system-ui, sans-serif; }
+
+  /* ---- 9:16 stage, cqmin sizing so any window/zoom records correctly ---- */
+  .stage {
+    position: relative;
+    aspect-ratio: 9 / 16;
+    height: min(100vh, 177.78vw);
+    container-type: size;
+    overflow: hidden;
+    background: #1c4e57;
+  }
+  canvas#water { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+  /* ---- overlay layers ---- */
+  .layer { position: absolute; inset: 0; pointer-events: none; }
+
+  /* look-away dim: warm glow, screen still "alive" in periphery */
+  #dim {
+    opacity: 0; transition: opacity 1.4s ease;
+    background: radial-gradient(ellipse at 50% 42%,
+      rgba(28,42,46,0.72) 0%, rgba(16,24,26,0.9) 78%);
+  }
+  #dim.on { opacity: 1; }
+
+  /* progress arc during look-away */
+  #arcWrap { display: flex; align-items: center; justify-content: center;
+             opacity: 0; transition: opacity 1s ease 0.6s; }
+  #arcWrap.on { opacity: 1; }
+  #arcWrap svg { width: 26cqmin; height: 26cqmin; }
+  #arcTrack { stroke: rgba(253,246,236,0.16); }
+  #arcFill  { stroke: rgba(253,246,236,0.75); stroke-linecap: round;
+              transform: rotate(-90deg); transform-origin: 50% 50%; }
+
+  /* text system */
+  .txt {
+    position: absolute; left: 8cqmin; right: 8cqmin;
+    text-align: center; color: var(--cream);
+    text-shadow: 0 0.4cqmin 2.6cqmin rgba(10,20,22,0.75), 0 0 1cqmin rgba(10,20,22,0.5);
+    font-weight: 800; letter-spacing: -0.01em;
+  }
+  .txt .w { display: inline-block; opacity: 0; transform: translateY(1.6cqmin) scale(0.92); }
+  .txt .w.pop { animation: pop 0.42s cubic-bezier(0.2, 1.4, 0.4, 1) forwards; }
+  @keyframes pop { to { opacity: 1; transform: translateY(0) scale(1); } }
+  .txt.big  { top: 20cqmin; font-size: 8.4cqmin; line-height: 1.16; }
+  .txt.mid  { top: 24cqmin; font-size: 6.4cqmin; line-height: 1.2; }
+  .txt.low  { bottom: 20cqmin; font-size: 5.4cqmin; line-height: 1.25; }
+  .txt.whisper {
+    bottom: 13cqmin; font-size: 3.4cqmin; font-weight: 600;
+    color: rgba(253,246,236,0.82); letter-spacing: 0.02em;
+  }
+  .txt.center { top: 50%; transform: translateY(-50%); font-size: 6.8cqmin; line-height: 1.3; }
+  .fadeout { animation: fade 0.7s ease forwards; }
+  @keyframes fade { to { opacity: 0; } }
+
+  /* wordmark chrome */
+  #mark {
+    position: absolute; top: 4.6cqmin; left: 0; right: 0; text-align: center;
+    color: rgba(253,246,236,0.92); font-weight: 800; font-size: 4.2cqmin;
+    text-shadow: 0 0.3cqmin 1.6cqmin rgba(10,20,22,0.6);
+    opacity: 0; transition: opacity 0.8s;
+  }
+  #mark.on { opacity: 1; }
+  #mark .dot { color: var(--orange); }
+  #mark .tag { display: block; font-size: 2.3cqmin; font-weight: 700;
+               color: rgba(253,246,236,0.75); letter-spacing: 0.03em; margin-top: 0.6cqmin; }
+
+  /* end card (variant 2) */
+  #endcard {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3cqmin;
+    background: var(--cream); opacity: 0; transition: opacity 0.9s ease; pointer-events: none;
+  }
+  #endcard.on { opacity: 1; }
+  #endcard .dog { width: 34cqmin; height: 34cqmin; }
+  #endcard h2 { color: var(--ink); font-size: 6.6cqmin; font-weight: 800;
+                text-align: center; line-height: 1.2; padding: 0 10cqmin; letter-spacing: -0.01em; }
+  #endcard .sub { color: #7a6a5f; font-size: 3.6cqmin; font-weight: 700; }
+  #endcard .url { margin-top: 1cqmin; background: var(--orange); color: #fff;
+                  font-weight: 800; font-size: 4.2cqmin; padding: 2cqmin 5cqmin;
+                  border-radius: 100cqmin; box-shadow: 0 1.2cqmin 3cqmin rgba(224,95,31,0.35); }
+
+  /* recording-safe controls: appear on mouse move only, auto-hide */
+  #ctl {
+    position: fixed; left: 12px; bottom: 12px; z-index: 50;
+    background: rgba(12,16,15,0.92); color: #dfe8e4; border-radius: 10px;
+    font: 12px/1.6 ui-monospace, monospace; padding: 10px 13px;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  #ctl.show { opacity: 1; }
+  #ctl b { color: #fff; }
+  #ctl .on { color: #ffb27d; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <canvas id="water"></canvas>
+
+  <div class="layer" id="dim"></div>
+  <div class="layer" id="arcWrap">
+    <svg viewBox="0 0 100 100" fill="none">
+      <circle id="arcTrack" cx="50" cy="50" r="44" stroke-width="2.6"/>
+      <circle id="arcFill" cx="50" cy="50" r="44" stroke-width="2.6"
+              stroke-dasharray="276.46" stroke-dashoffset="276.46"/>
+    </svg>
+  </div>
+
+  <div id="mark">Settle<span class="dot">.</span><span class="tag">movement snacks for your mind</span></div>
+  <div class="layer" id="txtLayer" style="pointer-events:none"></div>
+
+  <div id="endcard">
+    <svg class="dog" viewBox="0 0 120 120">
+      <ellipse cx="60" cy="118" rx="30" ry="5" fill="rgba(43,35,32,0.08)"/>
+      <path d="M28 44 Q22 20 38 26 Q46 30 46 40 Z" fill="#d99a4e"/>
+      <path d="M92 44 Q98 20 82 26 Q74 30 74 40 Z" fill="#d99a4e"/>
+      <circle cx="60" cy="56" r="34" fill="#eebd77"/>
+      <circle cx="47" cy="50" r="12" fill="#c98944" opacity="0.55"/>
+      <circle cx="47" cy="50" r="4.6" fill="#2b2320"/>
+      <circle cx="73" cy="50" r="4.6" fill="#2b2320"/>
+      <circle cx="48.6" cy="48.4" r="1.5" fill="#fff"/>
+      <circle cx="74.6" cy="48.4" r="1.5" fill="#fff"/>
+      <ellipse cx="60" cy="63" rx="6.4" ry="5" fill="#2b2320"/>
+      <path d="M60 68 Q60 74 52 74 M60 68 Q60 74 68 74" stroke="#2b2320" stroke-width="2.6"
+            fill="none" stroke-linecap="round"/>
+      <path d="M46 86 Q60 96 74 86 L74 92 Q60 102 46 92 Z" fill="#f47b3f"/>
+      <circle cx="60" cy="95" r="4" fill="#f7c948"/>
+    </svg>
+    <h2>Sixty seconds of movement, matched to how you feel.</h2>
+    <div class="sub">free · in your browser · nobody will notice</div>
+    <div class="url">settlemoves.com</div>
+  </div>
+</div>
+
+<div id="ctl">
+  <b>Settle reel master — the far look</b><br>
+  <span id="vlabel"></span><br>
+  <b>1</b> pure (~27s) · <b>2</b> CTA (~31s) · <b>3</b> loop (record 12.0s, sound OFF)<br>
+  <b>S</b> sound: <span id="slabel" class="on">off</span> (off → water → water+chime) · <b>R</b> restart<br>
+  Record: window any size (stage letterboxes)· controls vanish after 2.5s stillness / any key
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var stage = document.getElementById("stage");
+  var canvas = document.getElementById("water");
+  var ctx = canvas.getContext("2d");
+  var txtLayer = document.getElementById("txtLayer");
+  var dim = document.getElementById("dim");
+  var arcWrap = document.getElementById("arcWrap");
+  var arcFill = document.getElementById("arcFill");
+  var mark = document.getElementById("mark");
+  var endcard = document.getElementById("endcard");
+  var ARC_LEN = 276.46;
+
+  // ---------- params ----------
+  var qs = new URLSearchParams(location.search);
+  var variant = +(qs.get("v") || 1);          // 1 pure, 2 CTA, 3 loop
+  var seek = parseFloat(qs.get("t") || "0");  // debug seek (seconds)
+  var soundMode = 0;                          // 0 off, 1 water, 2 water+chime
+
+  // ---------- canvas sizing ----------
+  var W = 0, H = 0, DPR = Math.min(window.devicePixelRatio || 1, 2);
+  function resize() {
+    var r = stage.getBoundingClientRect();
+    W = r.width; H = r.height;
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  // ---------- water scene ----------
+  // rocks: static layout in unit coords (x, y, rx, ry, hue) — warm greys/browns on sand
+  var ROCKS = [];
+  (function () {
+    var defs = [
+      [0.18,0.30,0.10,0.062,"#8f8378"],[0.42,0.24,0.066,0.045,"#a89a87"],
+      [0.70,0.30,0.115,0.075,"#7c7168"],[0.88,0.22,0.06,0.04,"#98897b"],
+      [0.12,0.52,0.075,0.05,"#a39281"],[0.36,0.47,0.093,0.06,"#8a7d6f"],
+      [0.63,0.52,0.07,0.048,"#b0a08c"],[0.85,0.48,0.088,0.058,"#867a6e"],
+      [0.24,0.70,0.106,0.068,"#94867a"],[0.52,0.68,0.072,0.05,"#a99781"],
+      [0.76,0.72,0.098,0.062,"#7f7469"],[0.10,0.86,0.07,0.046,"#9c8d7e"],
+      [0.40,0.88,0.088,0.056,"#8b7e71"],[0.68,0.90,0.065,0.045,"#a49484"],
+      [0.90,0.86,0.08,0.05,"#90837a"]
+    ];
+    for (var i = 0; i < defs.length; i++)
+      ROCKS.push({ x: defs[i][0], y: defs[i][1], rx: defs[i][2], ry: defs[i][3], c: defs[i][4], ph: i * 1.7 });
+  })();
+
+  // sparkle glints
+  var GLINTS = [];
+  for (var g = 0; g < 26; g++)
+    GLINTS.push({ x: Math.random(), y: Math.random(), ph: Math.random() * 6.28, sp: 0.5 + Math.random() * 1.2 });
+
+  // pebble drift path (slow lissajous, 12s period for seamless loop variant)
+  function pebblePos(t) {
+    var T = 12;
+    var a = (t % T) / T * Math.PI * 2;
+    return {
+      x: 0.5 + 0.17 * Math.sin(a),
+      y: 0.55 + 0.09 * Math.sin(2 * a + 1.2)
+    };
+  }
+
+  function drawScene(t, pebbleGlow) {
+    // water gradient
+    var grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, "#3f8f96");
+    grad.addColorStop(0.45, "#2e7681");
+    grad.addColorStop(1, "#1d545e");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // sandy patches
+    ctx.globalAlpha = 0.16;
+    ctx.fillStyle = "#d9bd8e";
+    for (var s = 0; s < 4; s++) {
+      var sx = [0.25, 0.7, 0.45, 0.85][s] * W, sy = [0.42, 0.6, 0.82, 0.3][s] * H;
+      ctx.beginPath();
+      ctx.ellipse(sx, sy, W * 0.3, H * 0.12, 0, 0, 6.29);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // rocks with gentle refraction wobble
+    for (var i = 0; i < ROCKS.length; i++) {
+      var r = ROCKS[i];
+      var wob = Math.sin(t * 1.1 + r.ph) * 0.006;
+      var wobY = Math.cos(t * 0.9 + r.ph * 1.3) * 0.004;
+      ctx.fillStyle = r.c;
+      ctx.beginPath();
+      ctx.ellipse((r.x + wob) * W, (r.y + wobY) * H, r.rx * W, r.ry * H,
+                  Math.sin(r.ph) * 0.3, 0, 6.29);
+      ctx.fill();
+      // highlight
+      ctx.fillStyle = "rgba(255,246,230,0.18)";
+      ctx.beginPath();
+      ctx.ellipse((r.x + wob - r.rx * 0.25) * W, (r.y + wobY - r.ry * 0.3) * H,
+                  r.rx * 0.45 * W, r.ry * 0.4 * H, -0.4, 0, 6.29);
+      ctx.fill();
+    }
+
+    // caustic web: three drifting sine-braided bright lines layers
+    ctx.lineCap = "round";
+    for (var layer = 0; layer < 3; layer++) {
+      var alpha = [0.10, 0.08, 0.055][layer];
+      var lw = [1.6, 2.4, 3.6][layer];
+      var speed = [0.9, 0.6, 0.4][layer];
+      var ncurves = 7;
+      ctx.strokeStyle = "rgba(235,255,250," + alpha + ")";
+      ctx.lineWidth = lw * (W / 400);
+      for (var c = 0; c < ncurves; c++) {
+        ctx.beginPath();
+        var baseY = ((c + 0.5) / ncurves) * H;
+        for (var px = 0; px <= W; px += 8) {
+          var u = px / W;
+          var y = baseY
+            + Math.sin(u * 7 + t * speed + c * 2.1 + layer) * H * 0.028
+            + Math.sin(u * 13 - t * speed * 1.7 + c) * H * 0.014;
+          if (px === 0) ctx.moveTo(px, y); else ctx.lineTo(px, y);
+        }
+        ctx.stroke();
+      }
+    }
+
+    // glints (shimmer sparkles)
+    for (var k = 0; k < GLINTS.length; k++) {
+      var gl = GLINTS[k];
+      var tw = Math.max(0, Math.sin(t * gl.sp * 2 + gl.ph));
+      if (tw < 0.55) continue;
+      var a2 = (tw - 0.55) / 0.45;
+      var gx = gl.x * W, gy = gl.y * H, gr = (0.8 + a2 * 1.6) * (W / 300);
+      ctx.fillStyle = "rgba(255,255,248," + (0.5 * a2) + ")";
+      ctx.beginPath(); ctx.arc(gx, gy, gr, 0, 6.29); ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,248," + (0.35 * a2) + ")";
+      ctx.lineWidth = (W / 500);
+      ctx.beginPath();
+      ctx.moveTo(gx - gr * 3, gy); ctx.lineTo(gx + gr * 3, gy);
+      ctx.moveTo(gx, gy - gr * 3); ctx.lineTo(gx, gy + gr * 3);
+      ctx.stroke();
+    }
+
+    // the orange pebble (brand accent + focus target)
+    var p = pebblePos(t);
+    var pxp = p.x * W, pyp = p.y * H, pr = W * 0.055;
+    if (pebbleGlow > 0) {
+      var glow = ctx.createRadialGradient(pxp, pyp, pr * 0.4, pxp, pyp, pr * 3.2);
+      glow.addColorStop(0, "rgba(244,123,63," + 0.35 * pebbleGlow + ")");
+      glow.addColorStop(1, "rgba(244,123,63,0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(pxp, pyp, pr * 3.2, 0, 6.29); ctx.fill();
+    }
+    ctx.fillStyle = "#e2703a";
+    ctx.beginPath();
+    ctx.ellipse(pxp, pyp, pr, pr * 0.72, 0.2, 0, 6.29);
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,235,214,0.5)";
+    ctx.beginPath();
+    ctx.ellipse(pxp - pr * 0.3, pyp - pr * 0.28, pr * 0.4, pr * 0.24, -0.3, 0, 6.29);
+    ctx.fill();
+
+    // soft top-light vignette
+    var vg = ctx.createLinearGradient(0, 0, 0, H * 0.35);
+    vg.addColorStop(0, "rgba(210,245,240,0.14)");
+    vg.addColorStop(1, "rgba(210,245,240,0)");
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, W, H * 0.35);
+  }
+
+  // ---------- audio (synth; slots for real recordings can be laid in CapCut) ----------
+  var AC = null, waterGain = null, waterNodes = [];
+  function ensureAudio() {
+    if (AC) return;
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    waterGain = AC.createGain(); waterGain.gain.value = 0; waterGain.connect(AC.destination);
+    // babble: two band-passed noise loops + slow LFO wobble
+    for (var i = 0; i < 2; i++) {
+      var buf = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
+      var d = buf.getChannelData(0);
+      for (var n = 0; n < d.length; n++) d[n] = Math.random() * 2 - 1;
+      var src = AC.createBufferSource(); src.buffer = buf; src.loop = true;
+      var bp = AC.createBiquadFilter(); bp.type = "bandpass";
+      bp.frequency.value = i ? 900 : 2400; bp.Q.value = 0.8;
+      var g = AC.createGain(); g.gain.value = i ? 0.06 : 0.028;
+      var lfo = AC.createOscillator(); lfo.frequency.value = i ? 0.23 : 0.31;
+      var lg = AC.createGain(); lg.gain.value = i ? 260 : 500;
+      lfo.connect(lg); lg.connect(bp.frequency);
+      src.connect(bp); bp.connect(g); g.connect(waterGain);
+      src.start(); lfo.start();
+      waterNodes.push(src, lfo);
+    }
+  }
+  function setSound(mode) {
+    soundMode = mode;
+    document.getElementById("slabel").textContent = ["off", "water", "water+chime"][mode];
+    if (mode > 0) { ensureAudio(); AC.resume(); waterGain.gain.linearRampToValueAtTime(0.9, AC.currentTime + 0.8); }
+    else if (AC) waterGain.gain.linearRampToValueAtTime(0, AC.currentTime + 0.4);
+  }
+  function plip() {
+    if (!AC || soundMode < 1) return;
+    var o = AC.createOscillator(), g = AC.createGain();
+    o.frequency.setValueAtTime(700 + Math.random() * 500, AC.currentTime);
+    o.frequency.exponentialRampToValueAtTime(300, AC.currentTime + 0.12);
+    g.gain.setValueAtTime(0.05, AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + 0.14);
+    o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + 0.15);
+  }
+  function chime() {
+    if (!AC || soundMode < 2) return;
+    [523.25, 659.25].forEach(function (f, i) {
+      var o = AC.createOscillator(), g = AC.createGain();
+      o.type = "sine"; o.frequency.value = f;
+      var t0 = AC.currentTime + i * 0.12;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.16, t0 + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 2.2);
+      o.connect(g); g.connect(AC.destination); o.start(t0); o.stop(t0 + 2.3);
+    });
+  }
+  var lastPlip = 0;
+
+  // ---------- text timeline ----------
+  function showText(id, cls, words, wordGap) {
+    var el = document.createElement("div");
+    el.className = "txt " + cls;
+    el.id = id;
+    words.split(" ").forEach(function (w, i) {
+      var sp = document.createElement("span");
+      sp.className = "w";
+      sp.textContent = w;
+      sp.style.animationDelay = (i * (wordGap || 0.14)) + "s";
+      el.appendChild(sp);
+      el.appendChild(document.createTextNode(" "));
+    });
+    txtLayer.appendChild(el);
+    requestAnimationFrame(function () {
+      el.querySelectorAll(".w").forEach(function (sp) { sp.classList.add("pop"); });
+    });
+    return el;
+  }
+  function killText(id) {
+    var el = document.getElementById(id);
+    if (el) { el.classList.add("fadeout"); setTimeout(function () { el.remove(); }, 750); }
+  }
+
+  // beats: [time, fn] — variant 1/2 share the flow; 2 appends the end card
+  var LOOKAWAY_START = 11.5, LOOKAWAY_END = 19.5;
+  var BEATS = [
+    [0.2, function () { showText("t1", "big", "Stare at the water.", 0.16); }],
+    [2.6, function () { killText("t1"); showText("t2", "mid", "Find the orange pebble.", 0.13); }],
+    [5.4, function () { killText("t2"); showText("t3", "mid", "Follow it. Just your eyes.", 0.13);
+                        showText("w1", "whisper", "( screens hold your eyes close. time to let them go far )", 0.05); }],
+    [9.6, function () { killText("t3"); killText("w1"); }],
+    [10.0, function () { showText("t4", "big", "Now, look up.", 0.18); }],
+    [LOOKAWAY_START, function () {
+      killText("t4");
+      dim.classList.add("on"); arcWrap.classList.add("on");
+      showText("t5", "center", "Find the farthest thing you can see.", 0.12);
+      showText("w2", "whisper", "( we’ll wait. listen for the chime )", 0.05);
+    }],
+    [LOOKAWAY_END - 0.2, function () { chime(); }],
+    [LOOKAWAY_END, function () {
+      killText("t5"); killText("w2");
+      dim.classList.remove("on"); arcWrap.classList.remove("on");
+      showText("t6", "big", "Welcome back.", 0.2);
+    }],
+    [21.5, function () { killText("t6");
+      showText("t7", "mid", "Near, then far. Your eyes just reset.", 0.12); }],
+    [24.2, function () { killText("t7"); mark.classList.add("on");
+      showText("t8", "low", "That was a snack.", 0.14); }]
+  ];
+  var END_PURE = 27.5;
+  var BEATS_CTA = [
+    [27.0, function () { killText("t8"); mark.classList.remove("on"); endcard.classList.add("on"); }]
+  ];
+  var END_CTA = 31.5;
+
+  // ---------- runner ----------
+  var startTs = null, fired = [], rafId = null;
+  var vlabel = document.getElementById("vlabel");
+
+  function labelVariant() {
+    vlabel.textContent = "variant " + variant + " — " +
+      ["", "pure gift (no CTA — pinned comment is the door)",
+           "CTA (dog end card + settlemoves.com)",
+           "seamless loop (12.0s pebble cycle; record 0.0–12.0s exactly)"][variant];
+  }
+
+  function reset() {
+    txtLayer.innerHTML = "";
+    dim.classList.remove("on");
+    arcWrap.classList.remove("on");
+    mark.classList.remove("on");
+    endcard.classList.remove("on");
+    arcFill.style.strokeDashoffset = ARC_LEN;
+    fired = BEATS.map(function () { return false; });
+    firedCta = BEATS_CTA.map(function () { return false; });
+    startTs = performance.now() - seek * 1000;
+    labelVariant();
+    if (variant === 3) mark.classList.add("on");
+  }
+  var firedCta = [];
+
+  function frame(now) {
+    var t = (now - startTs) / 1000;
+
+    if (variant === 3) {
+      // loop: endless water, pebble glowing gently, wordmark on, no beats
+      drawScene(t, 0.5 + 0.3 * Math.sin(t * 0.52));
+    } else {
+      var total = (variant === 2) ? END_CTA : END_PURE;
+      if (t >= total) { t = total; }
+      // pebble glow strongest during the focus beat
+      var glow = (t > 2.4 && t < 10.5) ? 1 : (t <= 2.4 ? t / 2.4 * 0.4 : Math.max(0, 1 - (t - 10.5) / 1.2));
+      drawScene(t, glow);
+
+      BEATS.forEach(function (b, i) { if (!fired[i] && t >= b[0]) { fired[i] = true; b[1](); } });
+      if (variant === 2)
+        BEATS_CTA.forEach(function (b, i) { if (!firedCta[i] && t >= b[0]) { firedCta[i] = true; b[1](); } });
+
+      // look-away progress arc
+      if (t >= LOOKAWAY_START && t <= LOOKAWAY_END) {
+        var pr = (t - LOOKAWAY_START) / (LOOKAWAY_END - LOOKAWAY_START);
+        arcFill.style.strokeDashoffset = ARC_LEN * (1 - pr);
+      }
+      if (t >= total && variant === 1) {
+        // hold final frame (recording tail)
+      }
+    }
+
+    // occasional plips
+    if (soundMode >= 1 && t - lastPlip > 1.6 + Math.random() * 2) { lastPlip = t; plip(); }
+
+    rafId = requestAnimationFrame(frame);
+  }
+
+  // ---------- controls ----------
+  var ctl = document.getElementById("ctl"), hideTimer = null;
+  function peekCtl() {
+    ctl.classList.add("show");
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(function () { ctl.classList.remove("show"); }, 2500);
+  }
+  window.addEventListener("mousemove", peekCtl);
+  window.addEventListener("keydown", function (e) {
+    ctl.classList.remove("show"); // any key instantly hides — keyboard-driven shoot
+    if (e.key === "1" || e.key === "2" || e.key === "3") { variant = +e.key; seek = 0; reset(); }
+    else if (e.key === "s" || e.key === "S") setSound((soundMode + 1) % 3);
+    else if (e.key === "r" || e.key === "R") { seek = 0; reset(); }
+  });
+
+  reset();
+  rafId = requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
